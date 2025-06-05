@@ -1,0 +1,12 @@
+{
+    "api": {
+        "endpoint": "https://api.ai.cloud-temple.com/v1",
+        "token": "VOTRE_TOKEN_API_ICI"
+    },
+    "defaults": {
+        "model": "granite3.3:2b",
+        "max_tokens": 300,
+        "temperature": 0.8,
+        "timeout": 30.0
+    }
+}

@@ -1,0 +1,5 @@
+{
+  "api_url": "https://api.ai.cloud-temple.com/v1/audio/transcriptions",
+  "api_token": "",
+  "default_language": "fr"
+}

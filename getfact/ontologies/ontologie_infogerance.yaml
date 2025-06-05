@@ -1,0 +1,364 @@
+# 🤝 Ontologie Infogérance - Extraction de faits pour les services managés IT
+# Version: 1.0.0
+# Domaine: Infogérance, services managés, ITIL, outsourcing IT
+
+metadata:
+  nom: "Ontologie Infogérance"
+  domaine: "Infogérance et services managés IT"
+  version: "1.0.0"
+  description: "Ontologie spécialisée pour l'extraction de faits liés à l'infogérance, ITIL, contrats de service et SLA"
+  auteur: "LLMaaS Team - Cloud Temple"
+
+# 🤝 Entités infogérance spécifiques
+entites:
+  acteurs_service:
+    - type: "client"
+      description: "Organisation bénéficiaire des services"
+      exemples: ["donneur_ordre", "sponsor", "utilisateur_final", "metier"]
+    
+    - type: "prestataire"
+      description: "Organisation fournissant les services IT"
+      exemples: ["infogéreur", "sous_traitant", "partenaire", "cloud_provider"]
+    
+    - type: "equipe_service"
+      description: "Équipes opérationnelles de service"
+      exemples: ["service_desk", "noc", "soc", "dba", "admin_systeme"]
+
+  services_it:
+    - type: "service_infrastructure"
+      description: "Services liés à l'infrastructure IT"
+      exemples: ["hosting", "backup", "monitoring", "maintenance", "supervision"]
+    
+    - type: "service_applicatif"
+      description: "Services liés aux applications"
+      exemples: ["tma", "mco_applicative", "support_utilisateur", "evolutions"]
+    
+    - type: "service_securite"
+      description: "Services de sécurité managés"
+      exemples: ["siem_manage", "soc_externalise", "audit_secu", "pentest"]
+    
+    - type: "service_cloud"
+      description: "Services cloud managés"
+      exemples: ["cloud_management", "finops", "migration", "optimisation"]
+
+  processus_itil:
+    - type: "gestion_incident"
+      description: "Processus de gestion des incidents"
+      exemples: ["detection", "qualification", "resolution", "cloture"]
+    
+    - type: "gestion_probleme"
+      description: "Processus de gestion des problèmes"
+      exemples: ["analyse_cause", "solution_contournement", "prevention"]
+    
+    - type: "gestion_changement"
+      description: "Processus de gestion des changements"
+      exemples: ["rfc", "cab", "autorisation", "implementation"]
+
+# 🔗 Relations infogérance spécifiques
+relations:
+  contractuelles:
+    - type: "souscrit_a"
+      description: "Souscription à un service"
+    
+    - type: "fournit_a"
+      description: "Fourniture de service"
+    
+    - type: "sous_traite_a"
+      description: "Sous-traitance de service"
+    
+    - type: "facture_a"
+      description: "Facturation de service"
+
+  operationnelles:
+    - type: "supporte_par"
+      description: "Support opérationnel"
+    
+    - type: "surveille_par"
+      description: "Surveillance et monitoring"
+    
+    - type: "maintenu_par"
+      description: "Maintenance préventive/corrective"
+    
+    - type: "escalade_vers"
+      description: "Escalade de support"
+
+  qualite:
+    - type: "mesure_par"
+      description: "Mesure de qualité de service"
+    
+    - type: "ameliore_par"
+      description: "Amélioration continue"
+    
+    - type: "audite_par"
+      description: "Audit de service"
+
+# 📞 Événements infogérance typiques
+evenements:
+  service_management:
+    - "ouverture_ticket"
+    - "escalade_niveau2"
+    - "resolution_incident"
+    - "cloture_ticket"
+    - "satisfaction_client"
+  
+  change_management:
+    - "demande_changement"
+    - "evaluation_risque"
+    - "autorisation_cab"
+    - "implementation_changement"
+    - "verification_succes"
+  
+  capacity_management:
+    - "analyse_performance"
+    - "planification_capacite"
+    - "dimensionnement"
+    - "optimisation_ressources"
+  
+  business_continuity:
+    - "activation_pca"
+    - "bascule_site_secours"
+    - "test_continuite"
+    - "retour_nominal"
+  
+  reporting:
+    - "generation_rapport_sla"
+    - "comite_pilotage"
+    - "revue_service"
+    - "bilan_mensuel"
+
+# 📋 Attributs infogérance
+attributs:
+  sla_kpi:
+    - "disponibilite_service"
+    - "temps_resolution"
+    - "taux_satisfaction"
+    - "respect_sla"
+    - "penalites"
+  
+  financiers:
+    - "cout_service"
+    - "modele_facturation"
+    - "budget_mensuel"
+    - "economies_realisees"
+    - "investissements"
+  
+  qualite:
+    - "niveau_service"
+    - "maturite_processus"
+    - "certification_iso"
+    - "note_audit"
+    - "amelioration_continue"
+  
+  operationnels:
+    - "charge_travail"
+    - "competences_equipe"
+    - "outils_utilises"
+    - "automatisation_taux"
+    - "productivite"
+
+# 🏢 Contexte spatial infogérance
+contexte_spatial:
+  sites_service:
+    - "centre_services"
+    - "noc"
+    - "soc"
+    - "bureau_projet"
+    - "site_client"
+  
+  perimetres:
+    - "onsite"
+    - "offshore"
+    - "nearshore"
+    - "remote"
+    - "hybrid"
+  
+  couverture:
+    - "local"
+    - "national"
+    - "international"
+    - "24x7"
+    - "follow_the_sun"
+
+# ⏰ Contexte temporel infogérance
+contexte_temporel:
+  durees_contrat:
+    - "contrat_3_ans"
+    - "contrat_5_ans"
+    - "reconduction_tacite"
+    - "periode_transition"
+  
+  cycles_service:
+    - "support_24x7"
+    - "maintenance_programmee"
+    - "sauvegarde_quotidienne"
+    - "rapport_mensuel"
+  
+  sla_temporels:
+    - "delai_prise_compte"
+    - "temps_resolution_p1"
+    - "temps_resolution_p2"
+    - "fenetre_maintenance"
+    - "rto_rpo"
+
+# 💼 Modèles de service
+modeles_service:
+  delivery_models:
+    - "onsite"
+    - "offsite"
+    - "hybrid"
+    - "managed_services"
+    - "cloud_services"
+  
+  pricing_models:
+    - "forfait_mensuel"
+    - "regie"
+    - "au_ticket"
+    - "pay_per_use"
+    - "outcome_based"
+  
+  engagement_models:
+    - "contrat_cadre"
+    - "bon_commande"
+    - "sla_engage"
+    - "best_effort"
+    - "resultat_garanti"
+
+# 🛠️ Frameworks et standards
+frameworks:
+  itil:
+    - "service_strategy"
+    - "service_design"
+    - "service_transition"
+    - "service_operation"
+    - "continual_improvement"
+  
+  autres_frameworks:
+    - "COBIT"
+    - "MOF"
+    - "ISO 20000"
+    - "ISO 27001"
+    - "PRINCE2"
+  
+  methodologies:
+    - "agile"
+    - "devops"
+    - "lean_it"
+    - "six_sigma"
+    - "kaizen"
+
+# 📊 Métriques et KPI infogérance
+metriques:
+  service_delivery:
+    - "availability_sla"
+    - "mttr"
+    - "mtbf"
+    - "first_call_resolution"
+    - "customer_satisfaction"
+  
+  operational:
+    - "ticket_volume"
+    - "escalation_rate"
+    - "backlog_size"
+    - "sla_compliance"
+    - "productivity_index"
+  
+  financial:
+    - "cost_per_ticket"
+    - "cost_per_user"
+    - "budget_variance"
+    - "savings_delivered"
+    - "roi_service"
+  
+  quality:
+    - "process_maturity"
+    - "audit_score"
+    - "certification_status"
+    - "continuous_improvement"
+    - "innovation_index"
+  
+  business:
+    - "business_impact"
+    - "service_adoption"
+    - "user_productivity"
+    - "competitive_advantage"
+
+# 🎯 Instructions spécifiques d'extraction
+instructions_extraction:
+  priorites:
+    - "Identifier précisément les services et niveaux de service"
+    - "Extraire les métriques SLA et KPI de performance"
+    - "Caractériser les processus ITIL et maturité"
+    - "Documenter les coûts et modèles de facturation"
+    - "Suivre la satisfaction client et qualité"
+  
+  attention_particuliere:
+    - "Respect des SLA et pénalités contractuelles"
+    - "Processus d'escalade et responsabilités"
+    - "Coûts cachés et économies réalisées"
+    - "Maturité des processus et amélioration continue"
+    - "Risques opérationnels et plans de contingence"
+    - "Évolution des besoins client et roadmap"
+
+# 🔄 Processus infogérance
+processus:
+  service_request:
+    etapes:
+      - "demande_client"
+      - "qualification"
+      - "planification"
+      - "autorisation"
+      - "implementation"
+      - "verification"
+      - "cloture"
+  
+  incident_management:
+    etapes:
+      - "detection"
+      - "enregistrement"
+      - "classification"
+      - "investigation"
+      - "resolution"
+      - "cloture"
+      - "post_mortem"
+  
+  contract_management:
+    etapes:
+      - "negociation"
+      - "signature"
+      - "onboarding"
+      - "delivery"
+      - "monitoring"
+      - "renewal_review"
+
+# 📈 Gouvernance et pilotage
+gouvernance:
+  instances_pilotage:
+    - "comite_strategique"
+    - "comite_pilotage"
+    - "comite_operationnel"
+    - "revue_service"
+    - "comite_amelioration"
+  
+  documents_contractuels:
+    - "contrat_cadre"
+    - "sla"
+    - "ola"  # Operational Level Agreement
+    - "uc"   # Underpinning Contract
+    - "plan_qualite"
+  
+  reporting:
+    - "dashboard_operationnel"
+    - "rapport_sla"
+    - "bilan_financier"
+    - "plan_amelioration"
+    - "roadmap_services"
+
+exemples_utilisation:
+  - "Analyse de contrats d'infogérance"
+  - "Extraction de métriques SLA depuis les rapports"
+  - "Traitement des tickets de support"
+  - "Analyse de satisfaction client"
+  - "Documentation des processus ITIL"
+  - "Suivi des coûts et facturation"
+  - "Audit de qualité de service"
+  - "Planification des améliorations"

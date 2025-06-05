@@ -1,0 +1,10 @@
+{
+  "api_url": "https://api.ai.cloud-temple.com/v1/audio/transcriptions",
+  "api_token": "VOTRE_CLE_API_LLMAAS_ICI",
+  "default_language": "fr",
+  "default_prompt": "",
+  "chunk_duration_ms": 60000,
+  "chunk_overlap_ms": 5000,
+  "batch_size": 1,
+  "output_directory": "./transkryptor_outputs"
+}

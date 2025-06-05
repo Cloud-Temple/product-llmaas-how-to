@@ -1,0 +1,379 @@
+# ☁️ Ontologie Infrastructure et Cloud - Extraction de faits pour l'infrastructure IT
+# Version: 1.0.0
+# Domaine: Infrastructure, cloud computing, datacenter, réseaux
+
+metadata:
+  nom: "Ontologie Infrastructure et Cloud"
+  domaine: "Infrastructure IT et cloud computing"
+  version: "1.0.0"
+  description: "Ontologie spécialisée pour l'extraction de faits liés à l'infrastructure, cloud, réseaux et datacenters"
+  auteur: "LLMaaS Team - Cloud Temple"
+
+# 🏗️ Entités infrastructure spécifiques
+entites:
+  composants_physiques:
+    - type: "serveur_physique"
+      description: "Serveurs bare metal et équipements de calcul"
+      exemples: ["blade", "rack_server", "tower", "hci", "appliance"]
+    
+    - type: "equipement_reseau"
+      description: "Équipements de réseau et télécoms"
+      exemples: ["switch", "routeur", "firewall", "load_balancer", "proxy"]
+    
+    - type: "stockage"
+      description: "Systèmes de stockage et sauvegarde"
+      exemples: ["san", "nas", "baie_disques", "tape_library", "object_storage"]
+    
+    - type: "infrastructure_datacenter"
+      description: "Équipements de datacenter"
+      exemples: ["onduleur", "climatisation", "groupe_electrogene", "rack", "pdu"]
+
+  composants_virtuels:
+    - type: "machine_virtuelle"
+      description: "VMs et instances virtualisées"
+      exemples: ["vm_windows", "vm_linux", "template", "snapshot"]
+    
+    - type: "conteneur"
+      description: "Containers et orchestration"
+      exemples: ["docker", "kubernetes_pod", "service", "deployment"]
+    
+    - type: "reseau_virtuel"
+      description: "Composants réseau virtualisés"
+      exemples: ["vlan", "vxlan", "vpc", "subnet", "security_group"]
+
+  services_cloud:
+    - type: "iaas"
+      description: "Services Infrastructure as a Service"
+      exemples: ["compute", "storage", "network", "backup"]
+    
+    - type: "paas"
+      description: "Services Platform as a Service"
+      exemples: ["database_service", "container_platform", "serverless"]
+    
+    - type: "saas"
+      description: "Services Software as a Service"
+      exemples: ["email_service", "monitoring_service", "backup_service"]
+
+# 🔗 Relations infrastructure spécifiques
+relations:
+  physiques:
+    - type: "heberge_sur"
+      description: "Hébergement physique"
+    
+    - type: "connecte_a"
+      description: "Connexion physique ou logique"
+    
+    - type: "alimente_par"
+      description: "Alimentation électrique"
+    
+    - type: "refroidi_par"
+      description: "Refroidissement et climatisation"
+
+  logiques:
+    - type: "deploye_sur"
+      description: "Déploiement logique"
+    
+    - type: "depend_de"
+      description: "Dépendance technique"
+    
+    - type: "communique_avec"
+      description: "Communication réseau"
+    
+    - type: "sauvegarde_sur"
+      description: "Relation de sauvegarde"
+
+  cloud:
+    - type: "provisionne_par"
+      description: "Provisioning cloud"
+    
+    - type: "scale_vers"
+      description: "Mise à l'échelle"
+    
+    - type: "migre_vers"
+      description: "Migration cloud"
+
+# 🚀 Événements infrastructure typiques
+evenements:
+  lifecycle:
+    - "provisioning"
+    - "configuration"
+    - "deployment"
+    - "mise_en_production"
+    - "maintenance"
+    - "upgrade"
+    - "decommissioning"
+  
+  operations:
+    - "backup"
+    - "restore"
+    - "failover"
+    - "load_balancing"
+    - "auto_scaling"
+    - "patching"
+  
+  incidents:
+    - "panne_materielle"
+    - "coupure_reseau"
+    - "saturation_stockage"
+    - "surcharge_cpu"
+    - "indisponibilite_service"
+  
+  cloud_events:
+    - "instance_launch"
+    - "auto_scaling_trigger"
+    - "spot_instance_termination"
+    - "snapshot_creation"
+    - "cost_alert"
+
+# 📋 Attributs infrastructure
+attributs:
+  performance:
+    - "cpu_cores"
+    - "ram_gb"
+    - "storage_tb"
+    - "network_bandwidth"
+    - "iops"
+    - "latency_ms"
+  
+  disponibilite:
+    - "uptime_percentage"
+    - "rto"  # Recovery Time Objective
+    - "rpo"  # Recovery Point Objective
+    - "mtbf"  # Mean Time Between Failures
+    - "mttr"  # Mean Time To Repair
+  
+  couts:
+    - "cout_mensuel"
+    - "cout_par_heure"
+    - "cout_stockage_gb"
+    - "cout_bandwidth"
+    - "tco"  # Total Cost of Ownership
+  
+  localisation:
+    - "datacenter"
+    - "region_cloud"
+    - "availability_zone"
+    - "rack_position"
+    - "site_geographique"
+
+# 🌍 Contexte spatial infrastructure
+contexte_spatial:
+  datacenters:
+    - "dc_principal"
+    - "dc_secours"
+    - "edge_location"
+    - "colocation"
+    - "cloud_region"
+  
+  topologie_reseau:
+    - "lan"
+    - "wan"
+    - "internet"
+    - "vpn"
+    - "private_cloud"
+    - "public_cloud"
+    - "hybrid_cloud"
+  
+  zones_disponibilite:
+    - "zone_a"
+    - "zone_b"
+    - "zone_c"
+    - "multi_az"
+    - "cross_region"
+
+# ⏰ Contexte temporel infrastructure
+contexte_temporel:
+  cycles_maintenance:
+    - "maintenance_mensuelle"
+    - "patching_cycle"
+    - "backup_daily"
+    - "archivage_annuel"
+  
+  sla_temporels:
+    - "disponibilite_99_9"
+    - "temps_reponse_max"
+    - "fenetre_maintenance"
+    - "periode_sauvegarde"
+  
+  capacity_planning:
+    - "croissance_annuelle"
+    - "pic_saisonnier"
+    - "evolution_usage"
+    - "fin_de_vie_materiel"
+
+# 💰 Modèles économiques cloud
+modeles_couts:
+  pricing_models:
+    - "on_demand"
+    - "reserved_instances"
+    - "spot_instances"
+    - "savings_plans"
+    - "committed_use"
+  
+  cost_categories:
+    - "compute_cost"
+    - "storage_cost"
+    - "network_cost"
+    - "backup_cost"
+    - "support_cost"
+  
+  optimisation:
+    - "rightsizing"
+    - "auto_scaling"
+    - "scheduled_shutdown"
+    - "lifecycle_policies"
+
+# 🛠️ Technologies infrastructure
+technologies:
+  virtualisation:
+    - "VMware vSphere"
+    - "Microsoft Hyper-V"
+    - "KVM"
+    - "Citrix XenServer"
+    - "Red Hat Virtualization"
+  
+  conteneurs:
+    - "Docker"
+    - "Kubernetes"
+    - "OpenShift"
+    - "Rancher"
+    - "Docker Swarm"
+  
+  cloud_providers:
+    - "AWS"
+    - "Microsoft Azure"
+    - "Google Cloud Platform"
+    - "Oracle Cloud"
+    - "IBM Cloud"
+    - "Cloud Temple"
+  
+  automation:
+    - "Terraform"
+    - "Ansible"
+    - "Puppet"
+    - "Chef"
+    - "CloudFormation"
+  
+  monitoring:
+    - "Nagios"
+    - "Zabbix"
+    - "Prometheus"
+    - "Grafana"
+    - "CloudWatch"
+    - "Azure Monitor"
+
+# 📊 Métriques et KPI infrastructure
+metriques:
+  performance:
+    - "cpu_utilization"
+    - "memory_utilization"
+    - "disk_iops"
+    - "network_throughput"
+    - "response_time"
+  
+  disponibilite:
+    - "uptime_sla"
+    - "availability_percentage"
+    - "incident_count"
+    - "mtbf"
+    - "mttr"
+  
+  capacite:
+    - "storage_utilization"
+    - "compute_utilization"
+    - "network_utilization"
+    - "growth_rate"
+    - "capacity_planning"
+  
+  couts:
+    - "cost_per_vm"
+    - "cost_per_gb"
+    - "monthly_cloud_bill"
+    - "cost_optimization_savings"
+    - "roi_cloud_migration"
+  
+  environnement:
+    - "pue"  # Power Usage Effectiveness
+    - "carbon_footprint"
+    - "energy_efficiency"
+    - "cooling_efficiency"
+
+# 🎯 Instructions spécifiques d'extraction
+instructions_extraction:
+  priorites:
+    - "Identifier précisément les composants et leurs spécifications"
+    - "Extraire les métriques de performance et disponibilité"
+    - "Caractériser les relations de dépendance"
+    - "Documenter les configurations et architectures"
+    - "Suivre les coûts et optimisations"
+  
+  attention_particuliere:
+    - "Versions et compatibilités des technologies"
+    - "Points de défaillance unique (SPOF)"
+    - "Métriques SLA et disponibilité"
+    - "Optimisation des coûts cloud"
+    - "Impact environnemental et PUE"
+    - "Évolution de la capacité dans le temps"
+
+# 🏗️ Architectures et patterns
+architectures:
+  patterns_cloud:
+    - "multi_cloud"
+    - "hybrid_cloud"
+    - "cloud_native"
+    - "lift_and_shift"
+    - "cloud_first"
+  
+  patterns_resilience:
+    - "active_active"
+    - "active_passive"
+    - "disaster_recovery"
+    - "geo_redundancy"
+    - "auto_failover"
+  
+  patterns_scaling:
+    - "horizontal_scaling"
+    - "vertical_scaling"
+    - "elastic_scaling"
+    - "auto_scaling"
+    - "microservices"
+
+# 🔄 Processus infrastructure
+processus:
+  provisioning:
+    etapes:
+      - "specification_besoin"
+      - "design_architecture"
+      - "validation_securite"
+      - "provisioning_ressources"
+      - "configuration"
+      - "tests_validation"
+      - "mise_en_production"
+  
+  incident_management:
+    etapes:
+      - "detection_alerte"
+      - "diagnostic_initial"
+      - "escalation"
+      - "resolution"
+      - "verification"
+      - "post_mortem"
+  
+  capacity_planning:
+    etapes:
+      - "collecte_metriques"
+      - "analyse_tendances"
+      - "prevision_besoins"
+      - "planification_capacite"
+      - "validation_budget"
+      - "implementation"
+
+exemples_utilisation:
+  - "Analyse de rapports de performance infrastructure"
+  - "Extraction de métriques de monitoring"
+  - "Documentation d'architectures cloud"
+  - "Analyse de factures cloud et optimisation"
+  - "Traitement des incidents infrastructure"
+  - "Suivi des migrations cloud"
+  - "Planification de capacité"
+  - "Audit de configurations"

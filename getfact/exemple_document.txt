@@ -1,0 +1,57 @@
+# Rapport de Déploiement LLMaaS - Cloud Temple
+
+## Équipe Projet
+
+Jean Dupont, architecte solutions chez Cloud Temple, dirige le projet LLMaaS depuis janvier 2025. L'équipe comprend également Marie Martin, ingénieure DevOps spécialisée en infrastructure GPU, et Pierre Lefebvre, expert en sécurité SecNumCloud.
+
+Le projet est supervisé par Sophie Durand, directrice technique de Cloud Temple, basée dans les bureaux parisiens de l'entreprise. L'équipe travaille en collaboration étroite avec l'équipe d'infrastructure située dans le datacenter de Reims.
+
+## Infrastructure Déployée
+
+Le service LLMaaS utilise une infrastructure moderne composée de :
+
+### Serveurs de Calcul
+- 4 serveurs Cisco UCSX-210C-M7 équipés de GPU NVIDIA L40S (ia01 à ia04)
+- 2 serveurs avec GPU NVIDIA A100 pour les modèles standards (ia05, ia06)
+- 7 Mac Mini M4 et Mac Studio M4 pour les modèles légers (ai-mac-01 à ai-mac-07)
+
+### Modèles Déployés
+Le catalogue actuel inclut plusieurs modèles performants :
+- Qwen 3 (14B paramètres) : modèle principal pour usage général
+- Granite 3.3 (8B paramètres) : optimisé pour le raisonnement
+- DeepSeek R1 (7B paramètres) : spécialisé en analyse complexe
+- Gemma 3 (27B paramètres) : excellent pour le traitement multimodal
+
+### Réseau et Sécurité
+L'infrastructure réseau comprend des load balancers redondants (lb01-prod, lb02-prod) situés en DMZ. Le firewall OpnSense assure la sécurité avec des règles strictes pour le trafic SecNumCloud.
+
+## Événements Marquants
+
+### Janvier 2025 : Lancement du Projet
+Le 15 janvier 2025, Cloud Temple a officiellement lancé le projet LLMaaS. L'objectif était de livrer une solution complète d'IA souveraine avant juin 2025.
+
+### Mars 2025 : Premier Déploiement
+Le 12 mars 2025, l'équipe a déployé avec succès les premiers modèles Qwen sur l'infrastructure L40S. Les tests de performance ont montré une latence inférieure à 100ms pour le premier token.
+
+### Mai 2025 : Certification SecNumCloud
+Le 28 mai 2025, Cloud Temple a obtenu la certification SecNumCloud pour l'offre LLMaaS, validant ainsi la conformité de la solution aux exigences de souveraineté française.
+
+## Métriques de Performance
+
+Les derniers tests réalisés le 1er juin 2025 montrent :
+- Throughput : 750 tokens/seconde sur GPU L40S
+- Parallélisme : 6 requêtes simultanées par GPU en moyenne
+- Disponibilité : 99.8% depuis le démarrage en production
+- Temps de réponse moyen : 85ms pour le premier token
+
+## Perspectives d'Évolution
+
+L'équipe prévoit l'ajout de nouveaux modèles spécialisés d'ici septembre 2025, notamment pour le traitement audio avec Whisper et la génération d'images. Le budget alloué pour cette phase 2 est de 500k€.
+
+Sophie Durand a confirmé que Cloud Temple investira dans 2 serveurs supplémentaires équipés de GPU H100 pour répondre à la demande croissante. Ces serveurs seront installés dans le nouveau datacenter de Lyon prévu pour octobre 2025.
+
+## Conclusion
+
+Le projet LLMaaS représente un succès majeur pour Cloud Temple dans le domaine de l'IA souveraine. Grâce au travail de Jean Dupont et de son équipe, la France dispose désormais d'une alternative crédible aux solutions américaines pour l'intelligence artificielle en entreprise.
+
+Les prochaines étapes incluent l'extension du catalogue de modèles, l'optimisation des performances GPU, et le développement d'outils d'administration avancés pour les clients entreprise.

@@ -1,0 +1,256 @@
+# 👥 Ontologie Ressources Humaines - Extraction de faits RH et gestion du personnel
+# Version: 1.0.0
+# Domaine: RH, management, droit social, SIRH
+
+metadata:
+  nom: "Ontologie Ressources Humaines"
+  domaine: "RH et gestion du personnel"
+  version: "1.0.0"
+  description: "Ontologie spécialisée pour l'extraction de faits liés aux RH, recrutement, GPEC et droit social"
+  auteur: "LLMaaS Team - Cloud Temple"
+
+# 👤 Entités RH spécifiques
+entites:
+  personnes:
+    - type: "salarie"
+      description: "Employé sous contrat de travail"
+      exemples: ["CDI", "CDD", "stagiaire", "apprenti", "intérimaire"]
+    
+    - type: "candidat"
+      description: "Personne en processus de recrutement"
+      exemples: ["postulant", "candidat_retenu", "candidat_rejete"]
+    
+    - type: "manager"
+      description: "Personne ayant des responsabilités d'encadrement"
+      exemples: ["responsable_equipe", "chef_service", "directeur", "n+1"]
+    
+    - type: "partenaire_social"
+      description: "Représentants du personnel et syndicaux"
+      exemples: ["delegue_personnel", "elu_CSE", "representant_syndical"]
+
+  structures_rh:
+    - type: "service_rh"
+      description: "Départements et fonctions RH"
+      exemples: ["recrutement", "formation", "paie", "juridique_social"]
+    
+    - type: "entite_organisationnelle"
+      description: "Structures de l'organisation"
+      exemples: ["departement", "service", "equipe", "filiale", "etablissement"]
+
+  documents_rh:
+    - type: "contrat_travail"
+      description: "Documents contractuels"
+      exemples: ["CDI", "CDD", "avenant", "rupture_conventionnelle"]
+    
+    - type: "document_carriere"
+      description: "Documents de suivi de carrière"
+      exemples: ["entretien_annuel", "promotion", "mutation", "formation"]
+
+# 🔗 Relations RH spécifiques
+relations:
+  hierarchiques:
+    - type: "manager_de"
+      description: "Relation d'encadrement direct"
+    
+    - type: "collaborateur_de"
+      description: "Relation de collaboration"
+    
+    - type: "rattache_a"
+      description: "Rattachement organisationnel"
+
+  fonctionnelles:
+    - type: "remplace"
+      description: "Relation de remplacement temporaire"
+    
+    - type: "forme_par"
+      description: "Relation de formation/mentorat"
+    
+    - type: "evalue_par"
+      description: "Relation d'évaluation"
+
+  contractuelles:
+    - type: "emploie"
+      description: "Relation employeur-employé"
+    
+    - type: "prestataire_de"
+      description: "Relation de prestation externe"
+
+# 📊 Événements RH typiques
+evenements:
+  recrutement:
+    - "publication_offre"
+    - "reception_candidature"
+    - "entretien_recrutement"
+    - "decision_embauche"
+    - "integration_nouveau_salarie"
+  
+  gestion_carriere:
+    - "entretien_annuel"
+    - "entretien_professionnel"
+    - "demande_formation"
+    - "promotion"
+    - "changement_poste"
+    - "mutation"
+  
+  fin_contrat:
+    - "demission"
+    - "licenciement"
+    - "rupture_conventionnelle"
+    - "fin_cdd"
+    - "depart_retraite"
+  
+  formation:
+    - "analyse_besoins_formation"
+    - "inscription_formation"
+    - "realisation_formation"
+    - "evaluation_formation"
+
+# 📋 Attributs RH
+attributs:
+  personnels:
+    - "nom_prenom"
+    - "numero_matricule"
+    - "date_naissance"
+    - "anciennete"
+    - "niveau_etudes"
+  
+  contractuels:
+    - "type_contrat"
+    - "date_embauche"
+    - "periode_essai"
+    - "duree_contrat"
+    - "motif_cdd"
+  
+  remuneration:
+    - "salaire_brut"
+    - "coefficient"
+    - "prime"
+    - "avantages_nature"
+    - "variable"
+  
+  competences:
+    - "hard_skills"
+    - "soft_skills"
+    - "certifications"
+    - "langues"
+    - "niveau_competence"
+  
+  performance:
+    - "objectifs"
+    - "resultats"
+    - "note_evaluation"
+    - "commentaires_manager"
+    - "plan_amelioration"
+
+# 🏢 Contexte spatial RH
+contexte_spatial:
+  lieux_travail:
+    - "siege_social"
+    - "agence"
+    - "site_production"
+    - "bureau_regional"
+    - "teletravail"
+  
+  zones_geographiques:
+    - "region"
+    - "pays"
+    - "zone_mobilite"
+    - "bassin_emploi"
+
+# ⏰ Contexte temporel RH
+contexte_temporel:
+  cycles_rh:
+    - "campagne_entretiens"
+    - "campagne_mobilite"
+    - "periode_stages"
+    - "planning_formation"
+  
+  durees:
+    - "duree_contrat"
+    - "periode_essai"
+    - "preavis"
+    - "duree_formation"
+    - "anciennete"
+  
+  frequences:
+    - "entretien_annuel"
+    - "entretien_professionnel"
+    - "bilan_competences"
+    - "visite_medicale"
+
+# 💼 Processus RH spécialisés
+processus:
+  recrutement:
+    etapes:
+      - "definition_besoin"
+      - "redaction_fiche_poste"
+      - "sourcing_candidats"
+      - "tri_cv"
+      - "entretiens"
+      - "prise_reference"
+      - "decision_finale"
+  
+  onboarding:
+    etapes:
+      - "preparation_accueil"
+      - "remise_materiel"
+      - "presentation_equipe"
+      - "formation_initiale"
+      - "suivi_integration"
+  
+  evaluation:
+    etapes:
+      - "preparation_entretien"
+      - "auto_evaluation"
+      - "entretien_manager"
+      - "fixation_objectifs"
+      - "plan_developpement"
+
+# 🎯 Instructions spécifiques d'extraction
+instructions_extraction:
+  priorites:
+    - "Identifier précisément les personnes et leur statut dans l'organisation"
+    - "Extraire les informations contractuelles et temporelles"
+    - "Caractériser les relations hiérarchiques et fonctionnelles"
+    - "Identifier les compétences et niveaux de performance"
+    - "Suivre les étapes des processus RH"
+  
+  attention_particuliere:
+    - "Respect de la confidentialité et RGPD"
+    - "Distinction entre faits objectifs et appréciations subjectives"
+    - "Cohérence des informations temporelles"
+    - "Validation des données sensibles (salaires, évaluations)"
+    - "Traçabilité des décisions RH"
+
+# 📊 Métriques et KPI RH
+metriques:
+  recrutement:
+    - "time_to_hire"
+    - "cost_per_hire"
+    - "taux_transformation"
+    - "qualite_recrutement"
+  
+  retention:
+    - "taux_turnover"
+    - "taux_absenteisme"
+    - "anciennete_moyenne"
+    - "taux_promotion_interne"
+  
+  formation:
+    - "taux_formation"
+    - "budget_formation_par_salarie"
+    - "satisfaction_formation"
+    - "transfert_competences"
+  
+  performance:
+    - "taux_atteinte_objectifs"
+    - "distribution_evaluations"
+    - "progression_carriere"
+
+exemples_utilisation:
+  - "Analyse de CV et lettres de motivation"
+  - "Extraction d'informations des entretiens annuels"
+  - "Traitement des enquêtes de satisfaction"
+  - "Analyse des mouvements de personnel"
+  - "Suivi des formations et certifications"
+  - "Gestion des talents et succession planning"

@@ -1,0 +1,341 @@
+# 🔒 Ontologie Sécurité Logique - Extraction de faits pour la cybersécurité
+# Version: 1.0.0
+# Domaine: Cybersécurité, sécurité informatique, RSSI
+
+metadata:
+  nom: "Ontologie Sécurité Logique"
+  domaine: "Cybersécurité et sécurité informatique"
+  version: "1.0.0"
+  description: "Ontologie spécialisée pour l'extraction de faits liés à la cybersécurité, vulnérabilités et gestion des risques"
+  auteur: "LLMaaS Team - Cloud Temple"
+
+# 🛡️ Entités sécurité spécifiques
+entites:
+  acteurs_securite:
+    - type: "attaquant"
+      description: "Entités malveillantes ou hostiles"
+      exemples: ["hacker", "cybercriminel", "groupe_apt", "insider_threat", "script_kiddie"]
+    
+    - type: "defenseur"
+      description: "Acteurs de la défense et protection"
+      exemples: ["rssi", "analyste_soc", "expert_forensic", "pentester", "consultant_secu"]
+    
+    - type: "utilisateur"
+      description: "Utilisateurs du système"
+      exemples: ["employe", "administrateur", "invite", "service_account", "privileged_user"]
+
+  assets_securise:
+    - type: "donnee_sensible"
+      description: "Informations critiques à protéger"
+      exemples: ["donnees_personnelles", "secrets_commerciaux", "identifiants", "cartes_credit"]
+    
+    - type: "systeme_critique"
+      description: "Systèmes d'information critiques"
+      exemples: ["serveur_production", "base_donnees", "ad_controller", "firewall", "backup"]
+    
+    - type: "application_metier"
+      description: "Applications critiques pour l'activité"
+      exemples: ["erp", "crm", "portail_client", "api_publique", "plateforme_paiement"]
+
+  menaces_vulnerabilites:
+    - type: "vulnerabilite"
+      description: "Failles de sécurité techniques"
+      exemples: ["cve", "zero_day", "misconfiguration", "weak_password", "outdated_software"]
+    
+    - type: "malware"
+      description: "Logiciels malveillants"
+      exemples: ["virus", "trojan", "ransomware", "spyware", "rootkit", "botnet"]
+    
+    - type: "technique_attaque"
+      description: "Méthodes d'attaque"
+      exemples: ["phishing", "sql_injection", "xss", "ddos", "social_engineering"]
+
+# 🔗 Relations sécurité spécifiques
+relations:
+  attaque:
+    - type: "exploite"
+      description: "Exploitation d'une vulnérabilité"
+    
+    - type: "cible"
+      description: "Ciblage d'un asset ou système"
+    
+    - type: "compromet"
+      description: "Compromission d'un système"
+    
+    - type: "lateral_movement"
+      description: "Mouvement latéral dans le réseau"
+
+  protection:
+    - type: "protege_par"
+      description: "Protection par un mécanisme de sécurité"
+    
+    - type: "detecte_par"
+      description: "Détection par un outil de surveillance"
+    
+    - type: "remedie_par"
+      description: "Remédiation par une action"
+
+  gouvernance:
+    - type: "responsable_de"
+      description: "Responsabilité de sécurité"
+    
+    - type: "conforme_a"
+      description: "Conformité à un référentiel"
+    
+    - type: "auditee_par"
+      description: "Audit de sécurité"
+
+# 🚨 Événements sécurité typiques
+evenements:
+  incidents:
+    - "detection_intrusion"
+    - "compromission_compte"
+    - "exfiltration_donnees"
+    - "infection_malware"
+    - "attaque_ddos"
+    - "tentative_phishing"
+  
+  operations_securite:
+    - "scan_vulnerabilite"
+    - "pentest"
+    - "audit_securite"
+    - "mise_a_jour_securite"
+    - "changement_mot_passe"
+    - "revocation_certificat"
+  
+  reponse_incident:
+    - "alerte_soc"
+    - "analyse_forensic"
+    - "containment"
+    - "eradication"
+    - "recovery"
+    - "lessons_learned"
+  
+  gouvernance:
+    - "evaluation_risque"
+    - "revue_politique"
+    - "formation_sensibilisation"
+    - "exercice_crise"
+    - "certification_iso27001"
+
+# 📋 Attributs sécurité
+attributs:
+  vulnerabilites:
+    - "cvss_score"
+    - "cve_id"
+    - "severity_level"
+    - "exploitability"
+    - "impact_score"
+    - "patch_disponible"
+  
+  incidents:
+    - "criticite"
+    - "impact_metier"
+    - "vecteur_attaque"
+    - "ttd"  # Time to Detection
+    - "ttr"  # Time to Response
+    - "cout_incident"
+  
+  controles:
+    - "efficacite_controle"
+    - "niveau_maturite"
+    - "couverture_risque"
+    - "cout_controle"
+    - "statut_implementation"
+  
+  conformite:
+    - "niveau_conformite"
+    - "gap_analysis"
+    - "date_derniere_evaluation"
+    - "actions_remediation"
+
+# 🌐 Contexte spatial sécurité
+contexte_spatial:
+  perimetres:
+    - "dmz"
+    - "lan_interne"
+    - "cloud_public"
+    - "cloud_prive"
+    - "hybrid_cloud"
+    - "edge_computing"
+  
+  zones_securite:
+    - "zone_confiance_elevee"
+    - "zone_confiance_moyenne"
+    - "zone_confiance_faible"
+    - "zone_quarantaine"
+  
+  geolocalisation:
+    - "origine_attaque"
+    - "localisation_asset"
+    - "juridiction_donnees"
+    - "contraintes_souverainete"
+
+# ⏰ Contexte temporel sécurité
+contexte_temporel:
+  cycles_securite:
+    - "evaluation_risque_annuelle"
+    - "audit_trimestriel"
+    - "pentest_semestriel"
+    - "formation_annuelle"
+  
+  delais_critiques:
+    - "detection_time"
+    - "response_time"
+    - "containment_time"
+    - "recovery_time"
+    - "patch_time"
+  
+  tendances:
+    - "evolution_menaces"
+    - "cycle_vie_vulnerabilite"
+    - "saisonnalite_attaques"
+
+# 🛠️ Technologies et outils sécurité
+technologies:
+  detection_protection:
+    - "SIEM"
+    - "SOC"
+    - "EDR"
+    - "XDR"
+    - "SOAR"
+    - "Firewall"
+    - "IDS/IPS"
+    - "WAF"
+  
+  evaluation:
+    - "Nessus"
+    - "OpenVAS"
+    - "Qualys"
+    - "Metasploit"
+    - "Burp Suite"
+    - "OWASP ZAP"
+  
+  chiffrement:
+    - "TLS/SSL"
+    - "IPSec"
+    - "PGP/GPG"
+    - "AES"
+    - "RSA"
+    - "PKI"
+  
+  authentification:
+    - "Active Directory"
+    - "LDAP"
+    - "SAML"
+    - "OAuth"
+    - "MFA"
+    - "SSO"
+
+# 🎯 Frameworks et référentiels
+referentiels:
+  normes:
+    - "ISO 27001"
+    - "ISO 27002"
+    - "NIST Cybersecurity Framework"
+    - "PCI DSS"
+    - "SOX"
+    - "RGPD"
+  
+  methodologies:
+    - "EBIOS RM"
+    - "MEHARI"
+    - "OCTAVE"
+    - "FAIR"
+    - "COSO"
+  
+  classifications:
+    - "MITRE ATT&CK"
+    - "Kill Chain"
+    - "OWASP Top 10"
+    - "SANS Top 25"
+    - "CWE"
+
+# 📊 Métriques et KPI sécurité
+metriques:
+  detection:
+    - "mean_time_to_detection"
+    - "false_positive_rate"
+    - "coverage_rate"
+    - "alert_volume"
+  
+  response:
+    - "mean_time_to_response"
+    - "containment_time"
+    - "incident_resolution_time"
+    - "escalation_rate"
+  
+  vulnerabilites:
+    - "vulnerability_exposure_time"
+    - "patch_deployment_rate"
+    - "critical_vulnerabilities_count"
+    - "risk_score_evolution"
+  
+  conformite:
+    - "compliance_score"
+    - "audit_findings"
+    - "control_effectiveness"
+    - "gap_remediation_rate"
+  
+  business:
+    - "security_investment_roi"
+    - "business_impact_incidents"
+    - "availability_sla"
+    - "customer_trust_metrics"
+
+# 🎯 Instructions spécifiques d'extraction
+instructions_extraction:
+  priorites:
+    - "Identifier précisément les vulnérabilités et leur criticité"
+    - "Caractériser les vecteurs d'attaque et techniques utilisées"
+    - "Extraire les indicateurs de compromission (IoC)"
+    - "Documenter les contrôles de sécurité en place"
+    - "Suivre la chronologie des incidents et réponses"
+  
+  attention_particuliere:
+    - "Criticité et impact business des vulnérabilités"
+    - "Attribution des attaques et TTP (Tactics, Techniques, Procedures)"
+    - "Efficacité des contrôles et mesures compensatoires"
+    - "Délais de détection et de réponse"
+    - "Conformité aux exigences réglementaires"
+    - "Coûts et ROI des investissements sécurité"
+
+# 🔄 Processus sécurité
+processus:
+  gestion_vulnerabilites:
+    etapes:
+      - "scan_detection"
+      - "analyse_criticite"
+      - "priorisation"
+      - "planification_patch"
+      - "deploiement"
+      - "verification"
+  
+  reponse_incident:
+    etapes:
+      - "detection"
+      - "analyse_initiale"
+      - "classification"
+      - "containment"
+      - "investigation"
+      - "eradication"
+      - "recovery"
+      - "post_incident_review"
+  
+  gestion_risque:
+    etapes:
+      - "identification_actifs"
+      - "evaluation_menaces"
+      - "analyse_vulnerabilites"
+      - "calcul_risque"
+      - "traitement_risque"
+      - "surveillance"
+
+exemples_utilisation:
+  - "Analyse de rapports de vulnérabilités"
+  - "Extraction d'IoC depuis les logs SIEM"
+  - "Traitement des alertes de sécurité"
+  - "Analyse de rapports d'audit"
+  - "Documentation d'incidents de sécurité"
+  - "Suivi de conformité réglementaire"
+  - "Analyse de threat intelligence"

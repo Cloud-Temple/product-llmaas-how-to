@@ -1,0 +1,170 @@
+# 🏛️ Ontologie Juridique - Extraction de faits pour le domaine du droit
+# Version: 1.0.0
+# Domaine: Droit, juridique, contentieux, compliance
+
+metadata:
+  nom: "Ontologie Juridique"
+  domaine: "Droit et contentieux"
+  version: "1.0.0"
+  description: "Ontologie spécialisée pour l'extraction de faits juridiques, contractuels et de compliance"
+  auteur: "LLMaaS Team - Cloud Temple"
+
+# 👥 Entités juridiques spécifiques
+entites:
+  personnes_juridiques:
+    - type: "personne_physique"
+      description: "Individus ayant la capacité juridique"
+      exemples: ["demandeur", "défendeur", "témoin", "expert", "avocat"]
+    
+    - type: "personne_morale"
+      description: "Entités juridiques (sociétés, associations, etc.)"
+      exemples: ["SA", "SARL", "SAS", "association", "fondation", "collectivité"]
+    
+    - type: "autorite_judiciaire"
+      description: "Institutions et autorités compétentes"
+      exemples: ["tribunal", "cour d'appel", "cassation", "conseil d'état", "CNIL", "AMF"]
+
+  documents_juridiques:
+    - type: "acte_juridique"
+      description: "Documents ayant force de droit"
+      exemples: ["contrat", "jugement", "arrêt", "ordonnance", "transaction"]
+    
+    - type: "piece_procedure"
+      description: "Documents de procédure"
+      exemples: ["assignation", "citation", "requête", "conclusions", "mémoire"]
+
+  concepts_juridiques:
+    - type: "droit_obligation"
+      description: "Droits et obligations des parties"
+      exemples: ["créance", "dette", "garantie", "caution", "gage"]
+    
+    - type: "responsabilite"
+      description: "Types de responsabilité"
+      exemples: ["civile", "pénale", "administrative", "disciplinaire"]
+
+# 🔗 Relations juridiques spécifiques
+relations:
+  contractuelles:
+    - type: "partie_au_contrat"
+      description: "Relation entre entités liées par un contrat"
+      exemples: ["vendeur-acheteur", "bailleur-preneur", "employeur-employé"]
+    
+    - type: "garant_de"
+      description: "Relation de garantie ou caution"
+      
+    - type: "ayant_droit"
+      description: "Relation de succession de droits"
+
+  procedurales:
+    - type: "demandeur_contre"
+      description: "Relation d'opposition judiciaire"
+    
+    - type: "represente_par"
+      description: "Relation de représentation légale"
+    
+    - type: "competence_territoriale"
+      description: "Relation de compétence géographique"
+
+  hierarchiques:
+    - type: "voie_de_recours"
+      description: "Relations entre juridictions"
+      exemples: ["appel", "cassation", "révision"]
+
+# ⚖️ Événements juridiques typiques
+evenements:
+  procedures:
+    - "saisine_tribunal"
+    - "audience_plaidoirie"
+    - "delibere"
+    - "prononce_jugement"
+    - "signification"
+    - "execution_forcee"
+  
+  contractuels:
+    - "signature_contrat"
+    - "resiliation"
+    - "modification_avenant"
+    - "inexecution"
+    - "mise_en_demeure"
+  
+  contentieux:
+    - "constat_dommage"
+    - "expertise_judiciaire"
+    - "mediation"
+    - "transaction_amiable"
+
+# 📋 Attributs juridiques
+attributs:
+  temporels:
+    - "date_signature"
+    - "delai_prescription"
+    - "duree_contrat"
+    - "echeance"
+    - "delai_appel"
+  
+  financiers:
+    - "montant_principal"
+    - "interets"
+    - "penalites"
+    - "dommages_interets"
+    - "depens"
+  
+  juridiques:
+    - "nature_juridique"
+    - "competence"
+    - "applicable_law"
+    - "clause_specifique"
+    - "nullite"
+
+# 🏛️ Contexte spatial juridique
+contexte_spatial:
+  juridictions:
+    - "tribunal_instance"
+    - "tribunal_commerce"
+    - "conseil_prudhommes"
+    - "cour_appel"
+    - "cour_cassation"
+  
+  territoires:
+    - "ressort_territorial"
+    - "competence_geographique"
+    - "lieu_execution"
+    - "domicile_parties"
+
+# ⏰ Contexte temporel juridique
+contexte_temporel:
+  delais:
+    - "prescription_civile"
+    - "prescription_penale"
+    - "delai_appel"
+    - "delai_cassation"
+    - "forclusion"
+  
+  periodes:
+    - "duree_contrat"
+    - "periode_garantie"
+    - "terme_echeance"
+    - "suspension_delai"
+
+# 🎯 Instructions spécifiques d'extraction
+instructions_extraction:
+  priorites:
+    - "Identifier précisément les parties en présence et leur qualité juridique"
+    - "Extraire les montants, dates et délais avec précision"
+    - "Distinguer les faits juridiques des faits matériels"
+    - "Identifier la juridiction compétente et les voies de recours"
+    - "Caractériser la nature des obligations et responsabilités"
+  
+  attention_particuliere:
+    - "Prescription et délais"
+    - "Compétence territoriale et matérielle"
+    - "Nullités et vices du consentement"
+    - "Solidarité et caution"
+    - "Force majeure et cas fortuit"
+
+exemples_utilisation:
+  - "Analyse de contrats commerciaux"
+  - "Extraction de faits dans des jugements"
+  - "Traitement de dossiers contentieux"
+  - "Analyse de conformité réglementaire"
+  - "Gestion des risques juridiques"

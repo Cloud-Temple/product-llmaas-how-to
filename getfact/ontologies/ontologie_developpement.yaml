@@ -1,0 +1,332 @@
+# 💻 Ontologie Développement - Extraction de faits pour le développement logiciel
+# Version: 1.0.0
+# Domaine: Développement, DevOps, ingénierie logicielle
+
+metadata:
+  nom: "Ontologie Développement"
+  domaine: "Développement et ingénierie logicielle"
+  version: "1.0.0"
+  description: "Ontologie spécialisée pour l'extraction de faits liés au développement, DevOps et cycle de vie logiciel"
+  auteur: "LLMaaS Team - Cloud Temple"
+
+# 👨‍💻 Entités développement spécifiques
+entites:
+  personnes:
+    - type: "developpeur"
+      description: "Professionnel du développement logiciel"
+      exemples: ["frontend", "backend", "fullstack", "mobile", "devops"]
+    
+    - type: "architecte"
+      description: "Responsable de l'architecture technique"
+      exemples: ["solution", "systeme", "cloud", "microservices"]
+    
+    - type: "product_owner"
+      description: "Responsable produit et fonctionnalités"
+      exemples: ["PO", "chef_produit", "responsable_fonctionnel"]
+    
+    - type: "scrum_master"
+      description: "Facilitateur méthodologique"
+      exemples: ["SM", "coach_agile", "facilitateur"]
+
+  composants_techniques:
+    - type: "application"
+      description: "Applications et services développés"
+      exemples: ["web_app", "mobile_app", "api", "microservice", "batch"]
+    
+    - type: "infrastructure"
+      description: "Composants d'infrastructure"
+      exemples: ["serveur", "base_donnees", "cache", "load_balancer", "cdn"]
+    
+    - type: "framework_technologie"
+      description: "Technologies et frameworks utilisés"
+      exemples: ["React", "Spring", "Docker", "Kubernetes", "PostgreSQL"]
+
+  artefacts_code:
+    - type: "repository"
+      description: "Dépôts de code source"
+      exemples: ["git_repo", "branch", "tag", "release"]
+    
+    - type: "module_composant"
+      description: "Modules et composants logiciels"
+      exemples: ["library", "package", "component", "service"]
+    
+    - type: "documentation"
+      description: "Documentation technique"
+      exemples: ["readme", "api_doc", "architecture_doc", "wiki"]
+
+# 🔗 Relations développement spécifiques
+relations:
+  techniques:
+    - type: "depend_de"
+      description: "Dépendance technique entre composants"
+    
+    - type: "utilise"
+      description: "Utilisation d'une technologie/framework"
+    
+    - type: "deploye_sur"
+      description: "Relation de déploiement"
+    
+    - type: "interface_avec"
+      description: "Interface entre systèmes"
+
+  organisationnelles:
+    - type: "developpe_par"
+      description: "Relation développeur-projet"
+    
+    - type: "maintenu_par"
+      description: "Responsabilité de maintenance"
+    
+    - type: "appartient_a"
+      description: "Appartenance à une équipe/produit"
+
+  processus:
+    - type: "precede"
+      description: "Séquence dans le processus de développement"
+    
+    - type: "teste_par"
+      description: "Relation de test"
+    
+    - type: "integre_dans"
+      description: "Intégration dans un ensemble plus large"
+
+# 🚀 Événements développement typiques
+evenements:
+  cycle_developpement:
+    - "creation_feature_branch"
+    - "commit_code"
+    - "pull_request"
+    - "code_review"
+    - "merge_branch"
+    - "tag_release"
+  
+  ci_cd:
+    - "build_declenchee"
+    - "tests_automatises"
+    - "analyse_code"
+    - "deploiement_staging"
+    - "deploiement_production"
+    - "rollback"
+  
+  gestion_projet:
+    - "creation_ticket"
+    - "assignation_tache"
+    - "sprint_planning"
+    - "daily_standup"
+    - "sprint_review"
+    - "retrospective"
+  
+  incidents:
+    - "detection_bug"
+    - "creation_incident"
+    - "investigation"
+    - "resolution"
+    - "post_mortem"
+
+# 📋 Attributs développement
+attributs:
+  techniques:
+    - "langage_programmation"
+    - "version_framework"
+    - "architecture_pattern"
+    - "niveau_complexite"
+    - "performance_metrics"
+  
+  qualite:
+    - "couverture_tests"
+    - "score_qualite"
+    - "dette_technique"
+    - "vulnerabilites"
+    - "code_smells"
+  
+  processus:
+    - "methodologie"
+    - "duree_sprint"
+    - "velocity_equipe"
+    - "lead_time"
+    - "cycle_time"
+  
+  fonctionnels:
+    - "feature_flag"
+    - "user_story"
+    - "acceptance_criteria"
+    - "business_value"
+    - "priority"
+
+# 🏗️ Contexte spatial développement
+contexte_spatial:
+  environnements:
+    - "developpement"
+    - "integration"
+    - "recette"
+    - "preproduction"
+    - "production"
+  
+  plateformes:
+    - "cloud_aws"
+    - "cloud_azure"
+    - "cloud_gcp"
+    - "on_premise"
+    - "hybrid"
+  
+  regions:
+    - "europe_west"
+    - "us_east"
+    - "asia_pacific"
+    - "multi_region"
+
+# ⏰ Contexte temporel développement
+contexte_temporel:
+  cycles_agiles:
+    - "sprint_2_semaines"
+    - "sprint_3_semaines"
+    - "release_mensuelle"
+    - "release_trimestrielle"
+  
+  metriques_temps:
+    - "time_to_market"
+    - "lead_time"
+    - "cycle_time"
+    - "mttr"
+    - "deployment_frequency"
+  
+  phases_projet:
+    - "discovery"
+    - "mvp"
+    - "beta"
+    - "ga"
+    - "maintenance"
+
+# 🛠️ Technologies et stacks
+technologies:
+  langages:
+    frontend:
+      - "JavaScript"
+      - "TypeScript"
+      - "HTML5"
+      - "CSS3"
+      - "Dart"
+    
+    backend:
+      - "Java"
+      - "Python"
+      - "Node.js"
+      - "C#"
+      - "Go"
+      - "Rust"
+    
+    mobile:
+      - "Swift"
+      - "Kotlin"
+      - "Flutter"
+      - "React Native"
+  
+  frameworks:
+    frontend:
+      - "React"
+      - "Vue.js"
+      - "Angular"
+      - "Svelte"
+    
+    backend:
+      - "Spring Boot"
+      - "Django"
+      - "FastAPI"
+      - "Express.js"
+      - ".NET Core"
+  
+  databases:
+    - "PostgreSQL"
+    - "MySQL"
+    - "MongoDB"
+    - "Redis"
+    - "Elasticsearch"
+  
+  devops:
+    - "Docker"
+    - "Kubernetes"
+    - "Jenkins"
+    - "GitLab CI"
+    - "Terraform"
+    - "Ansible"
+
+# 📊 Métriques et KPI développement
+metriques:
+  productivite:
+    - "velocity_sprint"
+    - "throughput"
+    - "lines_of_code"
+    - "function_points"
+  
+  qualite:
+    - "test_coverage"
+    - "bug_rate"
+    - "code_quality_score"
+    - "security_score"
+    - "performance_score"
+  
+  delivery:
+    - "deployment_frequency"
+    - "lead_time_changes"
+    - "mttr"
+    - "change_failure_rate"
+  
+  business:
+    - "feature_adoption"
+    - "user_satisfaction"
+    - "roi_features"
+    - "time_to_value"
+
+# 🎯 Instructions spécifiques d'extraction
+instructions_extraction:
+  priorites:
+    - "Identifier les technologies et versions précises"
+    - "Extraire les relations de dépendance technique"
+    - "Caractériser les processus et méthodologies"
+    - "Suivre les métriques de performance et qualité"
+    - "Identifier les patterns architecturaux"
+  
+  attention_particuliere:
+    - "Versions et compatibilités des technologies"
+    - "Dépendances critiques et points de défaillance"
+    - "Métriques de performance et seuils"
+    - "Processus de sécurité et vulnérabilités"
+    - "Évolution de l'architecture dans le temps"
+
+# 🔄 Processus développement
+processus:
+  feature_development:
+    etapes:
+      - "user_story_creation"
+      - "technical_design"
+      - "development"
+      - "unit_testing"
+      - "code_review"
+      - "integration_testing"
+      - "deployment"
+  
+  bug_fixing:
+    etapes:
+      - "bug_triage"
+      - "root_cause_analysis"
+      - "fix_development"
+      - "testing"
+      - "regression_testing"
+      - "deployment"
+  
+  release_management:
+    etapes:
+      - "release_planning"
+      - "feature_freeze"
+      - "testing_phase"
+      - "release_candidate"
+      - "production_deployment"
+      - "monitoring"
+
+exemples_utilisation:
+  - "Analyse de documentation technique"
+  - "Extraction d'informations des pull requests"
+  - "Traitement des rapports de bug"
+  - "Analyse des logs de déploiement"
+  - "Suivi des métriques de performance"
+  - "Documentation d'architecture système"
+  - "Analyse de dépendances et vulnérabilités"
