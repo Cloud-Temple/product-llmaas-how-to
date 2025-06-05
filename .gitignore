@@ -131,3 +131,6 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# Gros fichiers audio (exemples)
+transkryptor/introdroit.m4a
