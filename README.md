@@ -61,10 +61,6 @@ Chaque exemple est organisé dans son propre sous-répertoire avec :
 
 Découvrez les capacités de l'API LLMaaS Cloud Temple à travers ces captures d'écran des exemples en action :
 
-### 🔌 API en Action
-![Test API Models](./screenshoot/api_01.png)
-*Script de test des modèles LLM montrant la comparaison de performances entre différents modèles disponibles sur l'API Cloud Temple*
-
 ### 🚀 Streaming en Temps Réel
 ![Streaming Demo](./screenshoot/streaming_01.png)
 *Démonstration du streaming SSE avec affichage token par token et métriques de performance en temps réel*
