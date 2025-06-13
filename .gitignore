@@ -9,7 +9,7 @@
 config.json
 
 # Dossiers temporairement exclus (en développement)
-photoanalyzer/
+
 
 # Fichiers Python
 __pycache__/

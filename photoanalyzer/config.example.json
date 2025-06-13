@@ -1,0 +1,9 @@
+{
+  "api_url": "https://api.ai.cloud-temple.com",
+  "api_token": "your_api_key_here",
+    "default_model": "qwen2.5vl:7b",
+  "default_max_tokens": 1000,
+  "default_temperature": 0.3,
+  "default_analysis_type": "general",
+  "output_directory": "./photoanalyzer_outputs"
+}

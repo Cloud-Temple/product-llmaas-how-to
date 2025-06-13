@@ -1,0 +1,18 @@
+# PhotoAnalyzer - Dépendances Python
+# Analyseur d'images multimodal pour l'API LLMaaS
+
+# Client HTTP asynchrone pour les appels API
+httpx>=0.25.0
+
+# Interface utilisateur riche pour le terminal
+rich>=13.5.0
+
+# Traitement d'images
+Pillow>=10.0.0
+
+# Variables d'environnement
+python-dotenv>=1.0.0
+
+# Optionnel : pour des fonctionnalités avancées d'analyse d'images
+# opencv-python>=4.8.0  # Pour l'analyse d'images plus avancée
+# numpy>=1.24.0         # Pour les opérations numériques sur les images

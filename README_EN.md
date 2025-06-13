@@ -82,7 +82,20 @@ Discover the capabilities of the Cloud Temple LLMaaS API through these screensho
 ![Transkryptor Results](./screenshoot/transkryptor_02.png)
 *Transcription results with intelligent chunking and parallel batch processing*
 
+### 📸 Multimodal Image Analysis
+![PhotoAnalyzer Journal](./photoanalyzer/images/journal.png)
+*Original image of a newspaper for multimodal analysis*
+
+![PhotoAnalyzer Vision 1](./screenshoot/journal1.png)
+*First model vision on the newspaper image*
+
+![PhotoAnalyzer Vision 2](./screenshoot/journal2.png)
+*Second model vision on the newspaper image*
+
 ## Available Examples
+
+### 📸 [PhotoAnalyzer](./photoanalyzer/)
+PhotoAnalyzer is an advanced Python CLI tool for image analysis using the LLMaaS API with multimodal models. It offers a polished user interface with debug modes, multiple output formats, and support for various specialized analysis prompt types.
 
 ### 🔍 [GetFact](./getfact/) 
 Intelligent fact and relationship extractor using the LLMaaS API. Capable of automatically extracting entities, events, relationships, attributes, temporal, and spatial information from text. Supports specialized business ontologies (Law, HR, DevOps, Security, Infrastructure, IT Management) for optimized contextual extraction.
