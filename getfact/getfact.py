@@ -24,6 +24,7 @@ import os
 import sys
 import json
 import yaml
+import re
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
@@ -524,21 +525,27 @@ async def extract_facts_from_chunk(api_url, api_key, model, system_prompt, chunk
     
     if debug_mode:
         debug_print(f"📤 Envoi requête API chunk {chunk_index}", {
-            "prompt_taille": len(system_prompt),
+            "url": f"{api_url}/chat/completions",
+            "model": model,
             "temperature": payload["temperature"]
         })
+        # Affichage complet du payload pour le debug
+        debug_print(f"📦 Payload complet pour chunk {chunk_index}", payload)
 
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(f"{api_url}/chat/completions", json=payload, headers=headers)
-            response.raise_for_status()
-            response_data = response.json()
             
             if debug_mode:
-                debug_print(f"📥 Réponse API reçue chunk {chunk_index}", {
+                # Affichage de la réponse brute
+                debug_print(f"📥 Réponse API brute reçue chunk {chunk_index}", {
                     "status_code": response.status_code,
-                    "choices_count": len(response_data.get("choices", []))
+                    "headers": dict(response.headers),
+                    "content": response.text # Affiche le contenu brut de la réponse
                 })
+
+            response.raise_for_status()
+            response_data = response.json()
             
             if response_data.get("choices") and response_data["choices"]:
                 content = response_data["choices"][0].get("message", {}).get("content", "")
@@ -551,64 +558,40 @@ async def extract_facts_from_chunk(api_url, api_key, model, system_prompt, chunk
                     
                     # 🧹 Nettoyage et parsing du JSON
                     try:
-                        # Nettoyer le contenu pour extraire le JSON
                         original_content = content
-                        content = content.strip()
                         
-                        # 🧠 Gestion des modèles raisonneurs avec <think>
-                        if content.startswith("<think>"):
+                        # 1. Supprimer les blocs <think> pour ne pas interférer avec la recherche de JSON
+                        processed_content = re.sub(r"<think>.*?</think>", "", original_content, flags=re.DOTALL).strip()
+                        
+                        # 2. Trouver le début du premier objet JSON
+                        json_start_index = processed_content.find('{')
+                        if json_start_index == -1:
+                            console.print(f"[{COLORS['warning']}]⚠️ Attention: Aucun JSON détecté après nettoyage pour le chunk {chunk_index}.[/{COLORS['warning']}]")
                             if debug_mode:
-                                debug_print(f"🧠 Modèle raisonneur détecté chunk {chunk_index}", {
-                                    "debut_content": content[:200]
-                                })
-                            # Extraire le contenu après </think>
-                            think_end = content.find("</think>")
-                            if think_end != -1:
-                                content = content[think_end + 8:].strip()
-                                if debug_mode:
-                                    debug_print(f"🧠 Contenu après <think> extrait chunk {chunk_index}", {
-                                        "nouveau_debut": content[:200]
-                                    })
-                        
-                        # 📝 Nettoyage des balises de code
-                        if content.startswith("```json"):
-                            content = content[7:]
-                        if content.endswith("```"):
-                            content = content[:-3]
-                        content = content.strip()
-                        
-                        if debug_mode and original_content != content:
-                            debug_print(f"🧹 Contenu final nettoyé chunk {chunk_index}", {
-                                "avant_nettoyage": len(original_content),
-                                "apres_nettoyage": len(content),
-                                "contenu_final": content[:500] + "..." if len(content) > 500 else content
-                            })
-                        
-                        facts_data = json.loads(content)
+                                debug_print(f"❌ Contenu non-JSON reçu chunk {chunk_index}", {"contenu_original": original_content})
+                            return None
+
+                        # 3. Utiliser raw_decode pour parser le premier objet JSON valide et ignorer le reste
+                        json_to_decode = processed_content[json_start_index:]
+                        decoder = json.JSONDecoder()
+                        facts_data, _ = decoder.raw_decode(json_to_decode)
                         
                         if debug_mode:
-                            debug_print(f"✅ JSON parsé avec succès chunk {chunk_index}", {
-                                "facts_count": len(facts_data.get("facts", [])),
-                                "relationships_count": len(facts_data.get("relationships", [])),
-                                "summary_present": "summary" in facts_data
-                            })
+                            debug_print(f"✅ JSON parsé avec succès via raw_decode pour le chunk {chunk_index}")
                         
                         return facts_data
                         
                     except json.JSONDecodeError as e:
                         console.print(f"[{COLORS['warning']}]⚠️ Attention: Réponse JSON invalide pour le chunk {chunk_index}: {e}[/{COLORS['warning']}]")
-                        console.print(f"[{COLORS['warning']}]📄 Contenu reçu: {content[:200]}...[/{COLORS['warning']}]")
+                        if "Unterminated string" in str(e):
+                            console.print(f"[{COLORS['info']}]💡 Conseil: Cette erreur est souvent due à une réponse tronquée. Essayez d'augmenter la valeur de --max-tokens.[/{COLORS['info']}]")
+                        
                         if debug_mode:
                             debug_print(f"❌ Échec parsing JSON chunk {chunk_index}", {
                                 "erreur": str(e),
-                                "contenu_complet": content
+                                "contenu_complet_original": original_content
                             })
                         return None
-                else:
-                    console.print(f"[{COLORS['error']}]💭 Réponse vide pour le chunk {chunk_index}[/{COLORS['error']}]")
-                    if debug_mode:
-                        debug_print(f"💭 Réponse vide chunk {chunk_index}")
-                    return None
             else:
                 console.print(f"[{COLORS['error']}]🚫 Réponse API invalide pour le chunk {chunk_index}: 'choices' manquantes[/{COLORS['error']}]")
                 if debug_mode:

@@ -1,17 +1,18 @@
-# Exemple de Transcription Audio Avancé avec l'API LLMaaS Cloud Temple
+# Exemple de Transcription Audio Avancé avec l'API Cloud Temple
 
-📖 **Documentation complète** : [docs.cloud-temple.com](https://docs.cloud-temple.com)
+Ce répertoire contient un script Python avancé (`transcribe_audio.py`) pour transcrire des fichiers audio en utilisant l'API de transcription de Cloud Temple. Il inclut de nombreuses fonctionnalités avancées et des exemples de fichiers audio dans différentes langues.
 
-Ce répertoire contient un script Python avancé (`transcribe_audio.py`) pour transcrire des fichiers audio en utilisant l'**API de transcription LLMaaS Cloud Temple**. Il inclut de nombreuses fonctionnalités avancées et des exemples de fichiers audio dans différentes langues.
+## ✨ Nouvelles Fonctionnalités v2.1 (par rapport à v2.0)
 
-## ✨ Nouvelles Fonctionnalités v2.0
-
+- **🚀 Concurrence Asynchrone** : Capacité à exécuter plusieurs requêtes de transcription en parallèle en utilisant `asyncio`, `aiohttp` et `aiofiles`.
+  - Nouvelle option `-c` ou `--concurrency` pour définir le nombre de requêtes parallèles.
+  - Nouvelle option `-r` ou `--runs` pour répéter le traitement des fichiers plusieurs fois (utile pour les tests de charge).
 - **🐛 Mode debug** : Affichage détaillé des payloads, requêtes et réponses avec formatage JSON coloré
 - **💡 Support du prompt** : Possibilité de fournir un prompt pour guider la transcription Whisper
 - **🔍 Support des wildcards** : Traitement de plusieurs fichiers avec des patterns (ex: `*.mp3`, `audio/*.m4a`)
 - **🎵 Support M4A** : Ajout du support pour les fichiers M4A et autres formats audio populaires
-- **📊 Statistiques** : Résumé détaillé des succès/erreurs pour les traitements par lot
-- **🎨 Interface améliorée** : Affichage coloré et formaté avec indicateurs de progression
+- **📊 Statistiques Améliorées** : Résumé détaillé des succès/erreurs pour les traitements par lot, incluant la performance en requêtes/seconde.
+- **🎨 Interface améliorée** : Affichage coloré et formaté avec indicateurs de progression et ID de tâche pour les requêtes concurrentes.
 
 ## 📁 Fichiers Inclus
 
@@ -37,8 +38,8 @@ Le script supporte maintenant plusieurs formats audio :
 
 ## 🚀 Prérequis
 
-- Python 3.7+
-- La bibliothèque `requests`
+- Python 3.7+ (Python 3.8+ recommandé pour `asyncio`)
+- Les bibliothèques `requests` (pour fallback ou autres scripts), `aiohttp`, et `aiofiles`.
 
 ## ⚙️ Configuration Initiale
 
@@ -70,10 +71,10 @@ source venv_whisper_example/bin/activate
 # .\venv_whisper_example\Scripts\activate
 
 # Installer les dépendances
-pip install requests
+pip install requests aiohttp aiofiles
 ```
 
-## 🎮 Utilisation du Script v2.0
+## 🎮 Utilisation du Script v2.1
 
 ### Arguments Disponibles
 
@@ -89,6 +90,8 @@ python transcribe_audio.py -h
 - `--api-url` : URL de l'API de transcription
 - `-p, --prompt` : Prompt pour guider la transcription
 - `--debug` : Active le mode debug avec affichage des payloads
+- `-r, --runs` : Nombre total de passes à exécuter (défaut: 1)
+- `-c, --concurrency` : Nombre de requêtes parallèles par passe (défaut: 1)
 
 ### 📝 Exemples d'Utilisation
 
@@ -142,6 +145,15 @@ python transcribe_audio.py *.mp3 -l en --prompt "Interview" --debug
 
 # Debug complet
 python transcribe_audio.py audio/*.m4a -l fr --prompt "Podcast" --debug -t MON_TOKEN
+
+#### Exemples avec Concurrence (Nouveau v2.1)
+
+```bash
+# Transcrire french.mp3 5 fois, avec 2 requêtes en parallèle
+python transcribe_audio.py french.mp3 -r 5 -c 2
+
+# Transcrire tous les fichiers *.wav 3 fois, avec 3 requêtes en parallèle et mode debug
+python transcribe_audio.py *.wav -l en -r 3 -c 3 --debug
 ```
 
 ### 🎨 Sortie Attendue
@@ -262,14 +274,16 @@ Cela affichera tous les détails de la requête et de la réponse pour identifie
 
 ## 🔄 Comparaison des Versions
 
-| Fonctionnalité          | v1.0 | v2.0         |
-| ----------------------- | ---- | ------------ |
-| Fichier unique          | ✅   | ✅           |
-| Wildcards               | ❌   | ✅           |
-| Formats M4A, FLAC, etc. | ❌   | ✅           |
-| Prompt Whisper          | ❌   | ✅           |
-| Mode debug              | ❌   | ✅           |
-| Statistiques            | ❌   | ✅           |
-| Interface colorée       | ✅   | ✅ Améliorée |
+| Fonctionnalité            | v1.0 | v2.0         | v2.1 (Actuelle) |
+| ------------------------- | ---- | ------------ | --------------- |
+| Fichier unique            | ✅   | ✅           | ✅              |
+| Wildcards                 | ❌   | ✅           | ✅              |
+| Formats M4A, FLAC, etc.   | ❌   | ✅           | ✅              |
+| Prompt Whisper            | ❌   | ✅           | ✅              |
+| Mode debug                | ❌   | ✅           | ✅              |
+| Statistiques              | ❌   | ✅           | ✅ Améliorées   |
+| Interface colorée         | ✅   | ✅ Améliorée | ✅              |
+| **Concurrence Asynchrone**| ❌   | ❌           | ✅              |
+| **Options -r et -c**      | ❌   | ❌           | ✅              |
 
-La version 2.0 est 100% compatible avec la v1.0 tout en ajoutant de nombreuses fonctionnalités avancées !
+La version 2.1 s'appuie sur la v2.0 en ajoutant des capacités de tests de charge et de traitement parallèle.

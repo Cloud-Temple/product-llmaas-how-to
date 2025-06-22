@@ -2,6 +2,33 @@
 
 Ce répertoire contient une collection d'exemples de code et de scripts démontrant les différentes fonctionnalités et cas d'utilisation de **l'offre LLM as a Service (LLMaaS) de Cloud Temple**.
 
+## 🆕 Changelog - Dernières Nouveautés
+
+### Version 2.1.0 - Juin 2025
+
+#### 🔍 **GetFact - Extracteur de Faits**
+- ✨ **Support des modèles raisonneurs** : Gestion automatique des réponses incluant des blocs de pensée (`<think>...</think>`)
+- 🛠️ **Parsing JSON robuste** : Extraction fiable du contenu JSON même depuis des réponses malformées
+- 🐛 **Mode debug avancé** : Logs détaillés incluant le découpage précis, les payloads JSON complets et les réponses brutes de l'API
+
+#### 🎵 **Transkryptor - Transcription Audio**
+- 🔄 **Résilience aux erreurs** : Mécanisme de retry avec backoff exponentiel pour une meilleure stabilité
+- ✨ **Raffinement de transcription (`--rework`)** : Nouvelle option pour améliorer la transcription via un modèle de langage
+- 📄 **Script `rework-only.py`** : Nouveau script dédié pour raffiner des fichiers texte existants
+- 🔗 **Contexte continu (`--rework-follow`)** : Maintien du contexte entre les lots pour une meilleure cohérence
+- 📊 **Recommandations de qualité** : Configuration optimale basée sur des tests (20s pour contenu complexe, 10s pour dialogues)
+- 📦 **Dépendances étendues** : Ajout de `tiktoken` et `langchain-text-splitters` pour un meilleur découpage
+
+#### 📝 **Summarizer - Synthèse de Texte** ✨ *NOUVEL OUTIL*
+- 🆕 **Outil complet de synthèse** : Nouveau script pour générer des synthèses précises de fichiers texte ou Markdown de n'importe quelle taille
+- 🧩 **Découpage intelligent par tokens** : Utilise `tiktoken` pour un découpage précis respectant les limites des modèles
+- ⚡ **Traitement parallèle par lots** : Optimisation de la vitesse avec traitement simultané des chunks
+- 🔗 **Continuité contextuelle** : Maintien du contexte entre les sections pour une synthèse cohérente
+- 📝 **Prompts configurables** : Support de différents types de synthèse (concis, détaillé, points d'action, Q&A)
+- 📖 **Documentation complète** : README français et anglais avec exemples d'usage détaillés
+
+---
+
 ## À propos de LLMaaS Cloud Temple
 
 L'API LLMaaS de Cloud Temple vous permet d'intégrer facilement des modèles de langage dans vos applications. Elle est accessible via la Console Cloud Temple où vous pouvez gérer vos clés API, surveiller votre consommation et configurer vos paramètres.
@@ -99,6 +126,9 @@ PhotoAnalyzer est un outil CLI Python avancé pour l'analyse d'images utilisant 
 
 ### 🔍 [GetFact](./getfact/) 
 Extracteur de faits et relations intelligent utilisant l'API LLMaaS. Capable d'extraire automatiquement entités, événements, relations, attributs, informations temporelles et spatiales d'un texte. Supporte les ontologies métier spécialisées (Droit, RH, DevOps, Sécurité, Infrastructure, Infogérance) pour une extraction contextuelle optimisée.
+
+### 📝 [Summarizer](./summarizer/)
+Outil de synthèse de texte avancé utilisant l'API LLMaaS. Génère des synthèses précises de fichiers texte ou Markdown de n'importe quelle taille avec découpage intelligent par tokens, traitement parallèle par lots, et continuité contextuelle entre les sections.
 
 ### 📝 [List Models](./list_models/)
 Script simple pour lister tous les modèles disponibles via l'API LLMaaS avec leurs détails, spécifications et statuts.

@@ -1,0 +1,3 @@
+**Synthèse : Le Défi du Titan des Mers – Construction du sous-marin "Océanis"**  
+
+Marc Dubois, ingénieur en mécanique, mène un projet de construction d’un sous-marin nucléaire avancé ("Océanis") pour Naval Industries, avec un budget de 2,5 milliards d’euros et un délai de cinq ans. Il assemble une équipe spécialisée, met en place une gestion rigoureuse des risques, et surmonte des défis techniques (coque résistante, propulsion nucléaire) et humains (conflits, succession). Malgré des retards, des tests en mer et une coordination complexe, le projet est livré avec succès. Marc tire des leçons sur la planification, la communication et la gestion d’équipe, et décide de partager ses expériences via un livre pour inspirer d’autres chefs de projet.

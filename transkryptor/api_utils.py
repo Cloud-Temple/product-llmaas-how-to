@@ -11,12 +11,15 @@ asynchrones avec `httpx` et la gestion des erreurs.
 import httpx
 import asyncio
 import os
+import random
+import re
 from typing import Optional, Dict, Any, Union, BinaryIO
 import json # Pour le mode debug
 
 # Importer les fonctions d'affichage depuis cli_ui pour les messages
 # Utilisation d'imports directs car tous les modules sont dans le même répertoire
 from cli_ui import print_message, print_debug_data
+from prompts import REWORK_CONTEXT_ADDON
 # Note: Les types Union, Dict sont déjà importés globalement depuis `typing` dans ce fichier.
 
 # Nombre maximum de tentatives pour une requête API
@@ -117,12 +120,18 @@ async def transcribe_chunk_api(
             if e.response.status_code == 401:
                 print_message("Erreur d'authentification. Vérifiez votre clé API.", style="error", silent=silent, debug_mode=debug_mode)
                 return None # Pas de retry pour une erreur 401
-            if e.response.status_code == 429: # Too Many Requests
-                 print_message("Limite de requêtes atteinte. Augmentation du délai avant la prochaine tentative.", style="warning", silent=silent, debug_mode=debug_mode)
-                 await asyncio.sleep(INITIAL_RETRY_DELAY * (attempt + 1) * 2) # Délai plus long pour 429
-            elif attempt < MAX_RETRIES - 1:
-                delay = INITIAL_RETRY_DELAY * (attempt + 1)
-                print_message(f"Nouvelle tentative dans {delay}s...", style="warning", silent=silent, debug_mode=debug_mode)
+            
+            # Si ce n'est pas la dernière tentative, on calcule le délai et on attend
+            if attempt < MAX_RETRIES - 1:
+                # Backoff exponentiel avec jitter
+                delay = (INITIAL_RETRY_DELAY * (2 ** attempt)) + random.uniform(0, 1)
+
+                # Gérer le cas spécifique du "Too Many Requests" (429) en augmentant le délai
+                if e.response.status_code == 429:
+                    print_message("Limite de requêtes atteinte (429). Application d'un délai plus long.", style="warning", silent=silent, debug_mode=debug_mode)
+                    delay *= 2 # On double le délai calculé
+
+                print_message(f"Nouvelle tentative dans {delay:.2f}s...", style="warning", silent=silent, debug_mode=debug_mode)
                 await asyncio.sleep(delay)
             else:
                 print_message(f"Chunk {chunk_index+1}: Échec de la transcription après {MAX_RETRIES} tentatives.", style="error", silent=silent, debug_mode=debug_mode)
@@ -130,8 +139,8 @@ async def transcribe_chunk_api(
         except httpx.RequestError as e:
             print_message(f"Chunk {chunk_index+1}: Erreur de requête (Tentative {attempt+1}/{MAX_RETRIES}): {e}", style="error", silent=silent, debug_mode=debug_mode)
             if attempt < MAX_RETRIES - 1:
-                delay = INITIAL_RETRY_DELAY * (attempt + 1)
-                print_message(f"Nouvelle tentative dans {delay}s...", style="warning", silent=silent, debug_mode=debug_mode)
+                delay = (INITIAL_RETRY_DELAY * (2 ** attempt)) + random.uniform(0, 1)
+                print_message(f"Nouvelle tentative dans {delay:.2f}s...", style="warning", silent=silent, debug_mode=debug_mode)
                 await asyncio.sleep(delay)
             else:
                 print_message(f"Chunk {chunk_index+1}: Échec de la transcription après {MAX_RETRIES} tentatives (erreur réseau/connexion).", style="error", silent=silent, debug_mode=debug_mode)
@@ -143,13 +152,102 @@ async def transcribe_chunk_api(
         except Exception as e:
             print_message(f"Chunk {chunk_index+1}: Erreur inattendue lors de la transcription (Tentative {attempt+1}/{MAX_RETRIES}): {e}", style="error", silent=silent, debug_mode=debug_mode)
             if attempt < MAX_RETRIES - 1:
-                delay = INITIAL_RETRY_DELAY * (attempt + 1)
-                print_message(f"Nouvelle tentative dans {delay}s...", style="warning", silent=silent, debug_mode=debug_mode)
+                delay = (INITIAL_RETRY_DELAY * (2 ** attempt)) + random.uniform(0, 1)
+                print_message(f"Nouvelle tentative dans {delay:.2f}s...", style="warning", silent=silent, debug_mode=debug_mode)
                 await asyncio.sleep(delay)
             else:
                 print_message(f"Chunk {chunk_index+1}: Échec de la transcription après {MAX_RETRIES} tentatives (erreur inattendue).", style="error", silent=silent, debug_mode=debug_mode)
                 return None
     return None # Si toutes les tentatives échouent
+
+async def rework_transcription(
+    client: httpx.AsyncClient,
+    chat_api_url: str,
+    api_key: str,
+    transcription_text: str,
+    rework_prompt: str,
+    rework_model: str,
+    silent: bool = False,
+    debug_mode: bool = False,
+    context_sentence: Optional[str] = None
+) -> Optional[str]:
+    """
+    Envoie une transcription à un modèle de langage pour la raffiner.
+
+    Args:
+        client (httpx.AsyncClient): Client HTTPX asynchrone.
+        api_url (str): URL de l'API de chat.
+        api_key (str): Clé API pour l'authentification.
+        transcription_text (str): Le texte de la transcription à raffiner.
+        rework_prompt (str): Le prompt pour guider le raffinement.
+        silent (bool): Si True, supprime les messages d'information.
+        debug_mode (bool): Si True, active les messages de débogage.
+
+    Returns:
+        Optional[str]: Le texte raffiné, ou None en cas d'échec.
+    """
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    final_prompt = rework_prompt
+    if context_sentence:
+        final_prompt += REWORK_CONTEXT_ADDON.format(context_sentence=context_sentence)
+
+    payload = {
+        "model": rework_model,
+        "messages": [
+            {"role": "system", "content": final_prompt},
+            {"role": "user", "content": transcription_text}
+        ]
+    }
+
+    if debug_mode and not silent:
+        print_debug_data("Requête de Rework Préparée", 
+                         {"url": chat_api_url, "headers": {"Authorization": f"Bearer {api_key[:10]}..."}, 
+                          "payload": payload},
+                         silent=silent, debug_mode=debug_mode)
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            response = await client.post(chat_api_url, headers=headers, json=payload, timeout=180.0)
+            
+            if debug_mode and not silent:
+                response_headers_for_debug = dict(response.headers)
+                try:
+                    response_json_for_debug = response.json()
+                except json.JSONDecodeError:
+                    response_json_for_debug = response.text
+                print_debug_data(f"Réponse API de Rework (Tentative {attempt+1})",
+                                 {"status_code": response.status_code, 
+                                  "headers": response_headers_for_debug,
+                                  "body": response_json_for_debug},
+                                 silent=silent, debug_mode=debug_mode)
+
+            response.raise_for_status()
+            
+            full_response_text = response.json()["choices"][0]["message"]["content"]
+            
+            # Exclure le contenu des balises <think>
+            reworked_text = re.sub(r'<think>.*?</think>', '', full_response_text, flags=re.DOTALL)
+            
+            print_message("Rework de la transcription réussi.", style="success", silent=silent, debug_mode=debug_mode)
+            return reworked_text.strip()
+
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
+            print_message(f"Erreur API lors du rework (Tentative {attempt+1}/{MAX_RETRIES}): {e}", style="error", silent=silent, debug_mode=debug_mode)
+            if attempt < MAX_RETRIES - 1:
+                delay = (INITIAL_RETRY_DELAY * (2 ** attempt)) + random.uniform(0, 1)
+                print_message(f"Nouvelle tentative de rework dans {delay:.2f}s...", style="warning", silent=silent, debug_mode=debug_mode)
+                await asyncio.sleep(delay)
+            else:
+                print_message(f"Échec du rework après {MAX_RETRIES} tentatives.", style="error", silent=silent, debug_mode=debug_mode)
+                return None
+        except (KeyError, IndexError, json.JSONDecodeError) as e:
+            print_message(f"Erreur lors du parsing de la réponse de rework: {e}", style="error", silent=silent, debug_mode=debug_mode)
+            return None
+    return None
 
 if __name__ == '__main__':
     # Section de test pour api_utils.py

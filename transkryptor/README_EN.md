@@ -1,7 +1,5 @@
 # Transkryptor Python CLI - Advanced Audio Transcription Example
 
-📖 **Full documentation**: [docs.cloud-temple.com](https://docs.cloud-temple.com)
-
 This Python script, `transkryptor.py`, is an advanced command-line tool designed to transcribe audio files, even very large ones, using the **Cloud Temple LLMaaS Transcription API** (Whisper compatible). It implements intelligent audio file chunking with overlap, processes these chunks in parallel batches to optimize speed, and offers a polished user interface with debug and silent modes.
 
 ## ✨ Key Features
@@ -23,6 +21,7 @@ This Python script, `transkryptor.py`, is an advanced command-line tool designed
 -   **📝 Prompt Management**: Allows providing an initial prompt to guide the Whisper model and improve transcription relevance for specific contexts.
 -   **🗣️ Multilingual Support**: Specify the audio language for better accuracy.
 -   **📄 Verbatim Output**: Generates a complete transcription of the audio file.
+-   **🔄 Error Resilience**: Implements a retry mechanism with exponential backoff in case of API errors, making the script more resilient to temporary network issues.
 
 ## 🆕 New Features
 
@@ -43,11 +42,21 @@ A new `--preview` option displays the transcription in real-time directly in the
 
 **Note**: The `--preview` option uses Rich (already included in dependencies) and requires no additional installation.
 
+### 🔄 Transcription Refinement (`--rework`)
+A new `--rework` option allows submitting the transcription of each batch to a language model for refinement (correction, stylistic improvement, etc.).
+- **Batch-wise refinement**: Each transcription batch is processed individually by a language model to avoid exceeding context limits.
+- **Continuous Context (`--rework-follow`)**: Use this option to provide the end of the previous batch as context to the current batch, ensuring better transcription coherence.
+- **Configurable prompt**: Use `--rework-prompt` to define refinement instructions.
+- **Configurable model**: Use `--rework-model` to choose the language model for refinement.
+- **Separate output**: The refined text is written to a distinct file, specified by `--rework-output-file`.
+- **Model thinking management**: The script automatically ignores content within `<think>...</think>` tags in the model response.
+
 ## 📁 Directory Structure
 
 ```
 examples/transkryptor/
-├── transkryptor.py         # Main script
+├── transkryptor.py         # Main script for audio transcription
+├── rework-only.py          # NEW: Script to refine an existing text file
 ├── audio_utils.py          # Utilities for audio manipulation
 ├── api_utils.py            # Utilities for API calls
 ├── cli_ui.py               # Utilities for CLI interface (colors, etc.)
@@ -60,7 +69,7 @@ examples/transkryptor/
 ## 🚀 Prerequisites
 
 -   Python 3.8+
--   **`ffmpeg`**: For `pydub` to process a wide range of audio formats (like MP3, M4A, etc.), `ffmpeg` must be installed on your system and accessible in the PATH.
+-   **`ffmpeg`**: (For `transkryptor.py` only) For `pydub` to process a wide range of audio formats (like MP3, M4A, etc.), `ffmpeg` must be installed on your system and accessible in the PATH.
     -   On macOS: `brew install ffmpeg`
     -   On Debian/Ubuntu: `sudo apt update && sudo apt install ffmpeg`
     -   On Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH.
@@ -82,7 +91,7 @@ examples/transkryptor/
     ```bash
     pip install -r requirements.txt
     ```
-    This will install `httpx`, `pydub`, `rich`, `python-dotenv`, `soundfile`, and `numpy`.
+    This will install `httpx`, `pydub`, `rich`, `python-dotenv`, `soundfile`, `numpy`, `tiktoken`, and `langchain-text-splitters`.
 
 4.  **Configure the application**:
     *   Copy `config.example.json` to `config.json`.
@@ -100,14 +109,24 @@ examples/transkryptor/
           "chunk_overlap_ms": 2000,
           "batch_size": 1,
           "sample_rate_hz": 24000,
-          "output_directory": "./transkryptor_outputs"
+          "output_directory": "./transkryptor_outputs",
+          
+          "rework_enabled": false,
+          "rework_follow": false,
+          "rework_model": "qwen3:14b",
+          "rework_prompt": "You are an expert..."
         }
         ```
+        Rework options can also be defined in this file.
     *   Alternatively, you can pass the API key and other parameters directly via the command line.
 
 ## 🎮 Usage
 
-The script is used from the command line. Here's the basic help:
+The two main scripts, `transkryptor.py` and `rework-only.py`, are used from the command line.
+
+### `transkryptor.py` - Audio Transcription
+
+This script transcribes an audio file. Here's the basic help:
 
 ```bash
 python transkryptor.py --help
@@ -157,6 +176,12 @@ python transkryptor.py presentation.m4a --preview -o presentation_transcript.txt
 ```
 This example shows real-time transcription in the terminal and progressively writes it to a file.
 
+**🆕 Use Rework mode with context:**
+```bash
+python transkryptor.py meeting.mp3 -o meeting.txt --rework --rework-follow --rework-output-file meeting_reworked.txt
+```
+This command transcribes `meeting.mp3`, then refines the transcription by batches while maintaining context between them, and saves the result in `meeting_reworked.txt`.
+
 **Debug mode (incompatible with preview):**
 ```bash
 python transkryptor.py presentation.m4a -o presentation_transcript.txt --debug
@@ -168,6 +193,34 @@ To see debug details, use this command without the --preview option.
 python transkryptor.py very_long_file.mp3 --chunk-duration 600000 --chunk-overlap 60000 --batch-size 3
 ```
 (10-minute chunk, 1-minute overlap, 3 chunks per batch)
+
+---
+
+### `rework-only.py` - Text Refinement
+
+This new script takes a text file as input, intelligently chunks it based on token count, and applies the same refinement process as the `--rework` option in `transkryptor.py`.
+
+**Basic help:**
+```bash
+python rework-only.py --help
+```
+
+**Usage Examples for `rework-only.py`**
+
+**Refine a text file and save the result:**
+```bash
+python rework-only.py path/to/my_text.txt -o refined.txt
+```
+
+**Refine with specific token chunk size and different model, processing 4 chunks in parallel:**
+```bash
+python rework-only.py report.md --token-chunk-size 2048 --batch-size 4 --rework-model "llama3:8b"
+```
+
+**Refine with real-time preview and passing context from previous batch to next:**
+```bash
+python rework-only.py article.txt --preview
+```
 
 ## 📋 Command Line Options
 
@@ -188,6 +241,11 @@ python transkryptor.py very_long_file.mp3 --chunk-duration 600000 --chunk-overla
 | `--preview` | 🆕 Open a real-time preview window |
 | `--debug` | Enable verbose debug mode |
 | `--silent` | Silent mode: displays batch transcription to stdout |
+| `--rework` | Enable transcription refinement mode. Can also be enabled via `"rework_enabled": true` in `config.json`. |
+| `--rework-follow` | 🆕 Provide the end of the previous batch as context for the next batch. |
+| `--rework-prompt` | Prompt for transcription refinement. |
+| `--rework-model` | Model to use for refinement. |
+| `--rework-output-file` | File to save the refined transcription. |
 
 ## 🛠️ Supported Audio Formats
 
@@ -208,10 +266,44 @@ The script will convert the audio to a mono 16-bit PCM WAV format before sending
 - Use "Copy All" to quickly get the transcribed text.
 - The window remains open even after transcription is complete.
 
+### Quality Parameter Recommendations (Based on Testing)
+
+Tests have been conducted to determine optimal Whisper settings, particularly for complex content like lectures.
+
+**Key Principle**: Chunk length has a direct impact on quality. Longer chunks provide more context to the model, improving coherence, but may increase processing time.
+
+#### Optimal Configuration by Use Case
+
+-   **Long & Complex Content (Courses, Conferences, Technical Presentations)**
+    To preserve continuity of ideas and complex terminology, favor long chunks.
+    ```bash
+    python transkryptor.py my_file.mp3 --chunk-duration 20000 --chunk-overlap 30
+    ```
+    *   `--chunk-duration 20000` (20s): Preserves complex developments.
+    *   `--chunk-overlap 30` (30ms): Avoids redundancy between chunks.
+
+-   **Short & Fast Content (Conversations, Interviews, Dialogues)**
+    For better responsiveness and precise capture of exchanges, shorter chunks are more suitable.
+    ```bash
+    python transkryptor.py my_conversation.mp3 --chunk-duration 10000 --chunk-overlap 30
+    ```
+    *   `--chunk-duration 10000` (10s): Offers optimal responsiveness.
+
+#### Other Essential Parameters for Quality
+
+Regardless of content type, these parameters are crucial:
+```bash
+python transkryptor.py my_file.mp3 --sample-rate 44100 --language fr --prompt "Specific subject context"
+```
+*   `--sample-rate 44100`: Ensures maximum audio quality for analysis.
+*   `--language fr`: Forces the language and avoids auto-detection errors.
+*   `--prompt "Context"`: Guides the model on specific terminology or jargon to improve accuracy.
+
+With this optimized configuration, performance reaches a score of **8/10**, approaching the quality of OpenAI's Whisper API (8.5/10).
+
 ### Performance Optimization
-- For very long files, increase `chunk_duration` (e.g., 600000ms = 10min).
-- Increase `batch_size` if your internet connection is stable.
-- Use `--silent` mode for automated pipelines.
+- Increase `batch_size` if your internet connection is stable and the API can handle the load.
+- Use `--silent` mode for automated pipelines to reduce terminal load.
 
 ## 📝 Technical Notes
 

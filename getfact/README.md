@@ -14,6 +14,8 @@ Ce script permet d'extraire automatiquement les faits et les relations entre fai
 - **Mode interactif** : Validation/modification possible de l'extraction de chaque chunk
 - **Interface riche** : Affichage coloré avec barres de progression et résumés détaillés
 - **Configuration flexible** : Paramètres configurables via ligne de commande et variables d'environnement
+- **Support des modèles raisonneurs** : Gère automatiquement les réponses des modèles qui incluent des blocs de pensée (ex: `<think>...</think>`) avant le JSON.
+- **Parsing JSON robuste** : Extrait de manière fiable le contenu JSON même à partir de réponses malformées ou contenant du texte parasite.
 
 ## 🧠 Ontologies Spécialisées
 
@@ -326,7 +328,7 @@ Erreur: La variable d'environnement LLMAAS_API_KEY n'est pas définie.
 ```
 Attention: Réponse JSON invalide pour le chunk 2
 ```
-→ Essayez de réduire `--chunk-size-words` ou augmenter `--max-tokens`
+→ Le script est maintenant plus robuste et tente d'extraire le JSON même si la réponse est malformée. Si l'erreur persiste, elle peut être due à une réponse tronquée par l'API. Dans ce cas, essayez d'augmenter la valeur de `--max-tokens`.
 
 **Timeout API**
 ```
@@ -335,9 +337,13 @@ Erreur API pour le chunk 1: timeout
 → Le modèle peut être surchargé, réessayez ou changez de modèle
 
 ### Mode debug
-Utilisez `--debug` pour voir le découpage en chunks et diagnostiquer les problèmes :
+Utilisez `--debug` pour un diagnostic avancé. Cette option active des logs très détaillés, incluant :
+- Le découpage précis du texte en chunks.
+- Le `payload` JSON complet envoyé à l'API pour chaque chunk.
+- La réponse brute (code de statut, en-têtes et corps) reçue de l'API.
 
 ```bash
+# Activer le mode de débogage pour une analyse approfondie
 python getfact.py --file document.txt --debug
 ```
 

@@ -1,0 +1,6 @@
+langchain
+httpx
+pyyaml
+python-dotenv
+tqdm
+langchain-core

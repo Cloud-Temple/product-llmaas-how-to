@@ -2,6 +2,33 @@
 
 This repository contains a collection of code examples and scripts demonstrating the various features and use cases of **Cloud Temple's LLM as a Service (LLMaaS) offering**.
 
+## 🆕 Changelog - Latest Updates
+
+### Version 2.1.0 - June 2025
+
+#### 🔍 **GetFact - Fact Extractor**
+- ✨ **Reasoning Model Support**: Automatic handling of responses including thinking blocks (`<think>...</think>`)
+- 🛠️ **Robust JSON Parsing**: Reliable extraction of JSON content even from malformed responses
+- 🐛 **Advanced Debug Mode**: Detailed logs including precise chunking, complete JSON payloads, and raw API responses
+
+#### 🎵 **Transkryptor - Audio Transcription**
+- 🔄 **Error Resilience**: Retry mechanism with exponential backoff for better stability
+- ✨ **Transcription Refinement (`--rework`)**: New option to improve transcription via a language model
+- 📄 **`rework-only.py` Script**: New dedicated script to refine existing text files
+- 🔗 **Continuous Context (`--rework-follow`)**: Context maintenance between batches for better coherence
+- 📊 **Quality Recommendations**: Optimal configuration based on testing (20s for complex content, 10s for dialogues)
+- 📦 **Extended Dependencies**: Addition of `tiktoken` and `langchain-text-splitters` for better chunking
+
+#### 📝 **Summarizer - Text Summarization** ✨ *NEW TOOL*
+- 🆕 **Complete summarization tool**: New script to generate accurate summaries of text or Markdown files of any size
+- 🧩 **Intelligent token-based chunking**: Uses `tiktoken` for precise chunking respecting model limits
+- ⚡ **Parallel batch processing**: Speed optimization with simultaneous chunk processing
+- 🔗 **Contextual continuity**: Context maintenance between sections for coherent synthesis
+- 📝 **Configurable prompts**: Support for different summary types (concise, detailed, action items, Q&A)
+- 📖 **Complete documentation**: French and English README with detailed usage examples
+
+---
+
 ## About Cloud Temple LLMaaS
 
 Cloud Temple's LLMaaS API allows you to easily integrate language models into your applications. It is accessible via the Cloud Temple Console where you can manage your API keys, monitor your consumption, and configure your settings.
@@ -99,6 +126,9 @@ PhotoAnalyzer is an advanced Python CLI tool for image analysis using the LLMaaS
 
 ### 🔍 [GetFact](./getfact/) 
 Intelligent fact and relationship extractor using the LLMaaS API. Capable of automatically extracting entities, events, relationships, attributes, temporal, and spatial information from text. Supports specialized business ontologies (Law, HR, DevOps, Security, Infrastructure, IT Management) for optimized contextual extraction.
+
+### 📝 [Summarizer](./summarizer/)
+Advanced text summarization tool using the LLMaaS API. Generates accurate summaries of text or Markdown files of any size with intelligent token-based chunking, parallel batch processing, and contextual continuity between sections.
 
 ### 📝 [List Models](./list_models/)
 Simple script to list all models available via the LLMaaS API with their details, specifications, and statuses.

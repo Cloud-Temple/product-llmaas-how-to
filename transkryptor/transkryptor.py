@@ -25,7 +25,8 @@ from typing import List, Dict, Any, Optional, Tuple, TextIO
 # Importations des modules locaux
 from cli_ui import print_message, print_debug_data, get_progress_bar, console
 from audio_utils import load_audio, split_audio_into_chunks, export_chunk_to_wav_in_memory
-from api_utils import transcribe_chunk_api
+from api_utils import transcribe_chunk_api, rework_transcription
+from prompts import SYSTEM_PROMPT
 
 # Rich components pour la prévisualisation terminal
 from rich.live import Live
@@ -275,6 +276,10 @@ def load_configuration(config_path: Optional[str], silent: bool, debug_mode: boo
         "batch_size": DEFAULT_BATCH_SIZE,
         "sample_rate_hz": DEFAULT_SAMPLE_RATE_HZ,
         "output_directory": DEFAULT_OUTPUT_DIR,
+        "rework_enabled": False,
+        "rework_follow": False,
+        "rework_model": "qwen3:14b",
+        "rework_prompt": ""
     }
 
     load_dotenv()
@@ -302,6 +307,13 @@ def load_configuration(config_path: Optional[str], silent: bool, debug_mode: boo
             config["batch_size"] = file_config.get("batch_size", config["batch_size"])
             config["sample_rate_hz"] = file_config.get("sample_rate_hz", config["sample_rate_hz"])
             config["output_directory"] = file_config.get("output_directory", config["output_directory"])
+            
+            # Charger les nouvelles options de rework
+            config["rework_enabled"] = file_config.get("rework_enabled", config["rework_enabled"])
+            config["rework_follow"] = file_config.get("rework_follow", config["rework_follow"])
+            config["rework_model"] = file_config.get("rework_model", config["rework_model"])
+            config["rework_prompt"] = file_config.get("rework_prompt", config["rework_prompt"])
+
             print_message(f"Configuration chargée depuis '{actual_config_path}'.", silent=silent, debug_mode=debug_mode)
         except json.JSONDecodeError:
             print_message(f"Erreur de décodage JSON dans '{actual_config_path}'. Utilisation des valeurs par défaut/CLI.", style="error", silent=silent, debug_mode=debug_mode)
@@ -319,8 +331,8 @@ async def process_batch(
     api_key: str,
     language: Optional[str],
     prompt: Optional[str],
-    batch_progress_task_id, 
-    progress_bar, 
+    batch_progress_task_id,
+    progress,
     silent: bool,
     debug_mode: bool,
     preview_window: Optional[TerminalPreview] = None,
@@ -345,7 +357,6 @@ async def process_batch(
     
     processed_transcriptions = []
     for i, result in enumerate(batch_results):
-        progress_bar.update(batch_progress_task_id, advance=1)
         chunk_index = batch_chunks_data[i][3]
         
         if isinstance(result, Exception):
@@ -367,6 +378,14 @@ async def process_batch(
         # Mise à jour de la progression dans la fenêtre de prévisualisation
         if preview_window:
             preview_window.increment_progress()
+
+        # Mise à jour de la barre de progression du lot
+        if progress and batch_progress_task_id is not None:
+            progress.update(batch_progress_task_id, advance=1)
+            
+    # Forcer le rafraîchissement de la barre de progression du lot après que tous les chunks du lot soient traités
+    if not silent and not debug_mode and progress: # Ne rafraîchir que si les barres sont visibles
+        progress.refresh()
             
     return processed_transcriptions
 
@@ -421,8 +440,37 @@ def run_transcription_pipeline(args):
     cfg_sample_rate_hz = args.sample_rate if args.sample_rate is not None else cfg["sample_rate_hz"]
     cfg_output_directory = args.output_dir if args.output_dir is not None else cfg["output_directory"]
     
+    # Résoudre les options de rework (CLI > Fichier config > Défaut)
+    cfg_rework = args.rework or cfg["rework_enabled"]
+    cfg_rework_follow = args.rework_follow or cfg["rework_follow"]
+    
+    # Pour le prompt et le modèle, on établit une priorité : CLI > Fichier config > Défaut
+    if args.rework_prompt != parser.get_default('rework_prompt'):
+        # 1. Priorité au paramètre CLI s'il a été modifié par l'utilisateur
+        cfg_rework_prompt = args.rework_prompt
+    elif cfg.get("rework_prompt"):
+        # 2. Sinon, utiliser la valeur du fichier de configuration si elle n'est pas vide
+        cfg_rework_prompt = cfg["rework_prompt"]
+    else:
+        # 3. En dernier recours, utiliser la valeur par défaut définie dans le parser
+        cfg_rework_prompt = parser.get_default('rework_prompt')
+
+    if args.rework_model != parser.get_default('rework_model'):
+        cfg_rework_model = args.rework_model
+    elif cfg.get("rework_model"):
+        cfg_rework_model = cfg["rework_model"]
+    else:
+        cfg_rework_model = parser.get_default('rework_model')
+
     audio_file_path = args.audio_file_path
     output_file = args.output_file
+    
+    # Si aucun fichier de sortie n'est spécifié, en créer un par défaut
+    if output_file is None:
+        p = Path(audio_file_path)
+        output_file = f"transkrypt_{p.stem}.txt"
+        print_message(f"Aucun fichier de sortie spécifié. La transcription sera sauvegardée dans : {output_file}", style="info")
+
     debug_mode = args.debug
     silent_mode = args.silent
     preview_mode = args.preview
@@ -496,24 +544,35 @@ def run_transcription_pipeline(args):
             if preview_window:
                 preview_window.set_status("Transcription en cours...", "blue")
             
+            # Variable pour stocker la fin du dernier rework, définie dans la portée externe
+            last_reworked_sentence = None
+
             async def run_batches_async():
+                nonlocal last_reworked_sentence
                 async with httpx.AsyncClient() as client:
                     for i in range(num_batches):
                         batch_start_idx = i * cfg_batch_size
                         batch_end_idx = min((i + 1) * cfg_batch_size, num_chunks)
                         current_batch_data = indexed_chunks_data[batch_start_idx:batch_end_idx]
                         
-                        batch_task_description = f"[magenta]Lot {i+1}/{num_batches} (chunks {batch_start_idx+1}-{batch_end_idx})..."
-                        batch_task_id = progress.add_task(batch_task_description, total=len(current_batch_data))
+                        # Nouvelle tâche pour la progression des chunks à l'intérieur du lot actuel
+                        batch_chunk_task_id = progress.add_task(
+                            f"[magenta]Lot {i+1}/{num_batches} (chunks {batch_start_idx+1}-{batch_end_idx})...",
+                            total=len(current_batch_data)
+                        )
 
                         print_message(f"Traitement du lot {i+1}/{num_batches} ({len(current_batch_data)} chunks)...", silent=silent_mode or preview_mode, debug_mode=debug_mode)
                         
                         batch_transcriptions = await process_batch(
                             current_batch_data, client, cfg_api_url, cfg_api_key, cfg_language, cfg_prompt,
-                            batch_task_id, progress, silent_mode or preview_mode, debug_mode, preview_window, file_writer
+                            batch_chunk_task_id, progress, silent_mode or preview_mode, debug_mode, preview_window, file_writer
                         )
                         
                         batch_output_for_silent_mode = []
+                        # Le réassemblage dans l'ordre est garanti ici.
+                        # `all_transcriptions` est une liste pré-allouée de la taille du nombre total de chunks.
+                        # En utilisant `global_chunk_idx`, chaque transcription est placée à sa position
+                        # correcte dans la liste, quel que soit l'ordre dans lequel les réponses de l'API arrivent.
                         for original_idx_in_batch, transcription_text in enumerate(batch_transcriptions):
                             global_chunk_idx = batch_start_idx + original_idx_in_batch
                             if transcription_text is not None:
@@ -523,19 +582,67 @@ def run_transcription_pipeline(args):
                                 error_msg = f"[TRANSCRIPTION ÉCHOUÉE POUR CHUNK {global_chunk_idx+1}]"
                                 all_transcriptions[global_chunk_idx] = error_msg
                                 batch_output_for_silent_mode.append(error_msg)
-                            progress.update(overall_task_id, advance=1)
-
+                            progress.update(overall_task_id, advance=1) # Mise à jour de la progression globale des chunks
+                            
                         if silent_mode and not preview_mode:
                             batch_text = " ".join(filter(None, batch_output_for_silent_mode))
                             if batch_text.strip():
                                 console.print(batch_text.strip())
                         
-                        progress.remove_task(batch_task_id)
+                        progress.remove_task(batch_chunk_task_id) # Supprimer la barre de progression du lot une fois terminée
                         print_message(f"Lot {i+1}/{num_batches} terminé.", style="success", silent=silent_mode or preview_mode, debug_mode=debug_mode)
+
+                        # Rework par lot si demandé
+                        if cfg_rework:
+                            batch_text_to_rework = " ".join(filter(None, batch_output_for_silent_mode))
+                            if batch_text_to_rework.strip():
+                                # Créer une tâche temporaire pour le raffinement du lot
+                                rework_task_id = progress.add_task(f"[yellow]Raffinage du lot {i+1}/{num_batches}...", total=1)
+                                
+                                # Construire l'URL de chat correctement à chaque fois
+                                base_api_url = cfg_api_url.split('/v1/')[0]
+                                chat_api_url = f"{base_api_url}/v1/chat/completions"
+                                
+                                reworked_text = await rework_transcription(
+                                    client, chat_api_url, cfg_api_key, batch_text_to_rework, cfg_rework_prompt,
+                                    cfg_rework_model, silent=silent_mode, debug_mode=debug_mode,
+                                    context_sentence=last_reworked_sentence if cfg_rework_follow else None
+                                )
+                                
+                                if reworked_text:
+                                    # Mettre à jour la dernière phrase pour le prochain lot
+                                    if cfg_rework_follow:
+                                        # Prend les 150 derniers caractères comme approximation d'une phrase
+                                        last_reworked_sentence = reworked_text.strip()[-150:]
+                                    
+                                    # Utiliser le gestionnaire de fichier pour le rework
+                                    rework_writer.write_text(reworked_text)
+                                    print_message(f"Lot {i+1}/{num_batches} raffiné et ajouté au fichier de sortie.", style="success", silent=silent_mode, debug_mode=debug_mode)
+                                
+                                progress.update(rework_task_id, advance=1) # Marquer la tâche de raffinement comme terminée
+                                progress.remove_task(rework_task_id) # Supprimer la barre de raffinement
 
             if os.name == 'nt':
                 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            asyncio.run(run_batches_async())
+            
+            # Déterminer le nom du fichier de sortie pour le rework
+            rework_output_filename = None
+            if cfg_rework:
+                if args.rework_output_file:
+                    rework_output_filename = args.rework_output_file
+                elif output_file:
+                    p = Path(output_file)
+                    rework_output_filename = str(p.with_name(f"rework_{p.name}"))
+                else:
+                    p = Path(audio_file_path)
+                    rework_output_filename = f"rework_{p.stem}.txt"
+
+            with StreamingFileWriter(rework_output_filename, cfg_output_directory) as rework_writer:
+                if rework_writer.file_path:
+                    print_message(f"Écriture du rework en temps réel activée vers: {rework_writer.file_path}", style="info", silent=silent_mode, debug_mode=debug_mode)
+                
+                # Lancer le traitement
+                asyncio.run(run_batches_async())
 
     # Finalisation
     if preview_window:
@@ -551,6 +658,7 @@ def run_transcription_pipeline(args):
         console.rule("[bold green]Transcription Finale Complète")
         console.print(final_verbatim)
         console.rule()
+
 
     # Sauvegarder la transcription finale si pas d'écriture en streaming
     if output_file and not file_writer.file_path:
@@ -568,7 +676,8 @@ def run_transcription_pipeline(args):
             print_message(f"Transcription finale sauvegardée dans : {output_path}", style="success", silent=silent_mode, debug_mode=debug_mode)
         except IOError as e:
             print_message(f"Erreur lors de la sauvegarde de la transcription dans '{output_path}': {e}", style="error", silent=silent_mode, debug_mode=debug_mode)
-    elif not silent_mode and not file_writer.file_path:
+    elif not silent_mode and not file_writer.file_path and not cfg_rework:
+        # N'afficher ce message que si on ne fait pas de rework (car le rework a déjà son propre fichier)
         print_message("Aucun fichier de sortie spécifié. La transcription finale est affichée ci-dessus.", silent=silent_mode, debug_mode=debug_mode)
 
     end_time = time.time()
@@ -603,6 +712,11 @@ if __name__ == '__main__':
     parser.add_argument('--preview', action='store_true', help="Ouvrir une fenêtre de prévisualisation pour voir la transcription en temps réel.")
     parser.add_argument('--debug', action='store_true', help="Activer le mode de débogage verbeux.")
     parser.add_argument('--silent', action='store_true', help="Mode silencieux: affiche la transcription des lots sur stdout.")
+    parser.add_argument('--rework', action='store_true', help="Activer le mode de raffinement de la transcription.")
+    parser.add_argument('--rework-follow', action='store_true', help="Fournir la fin du lot précédent comme contexte pour le lot suivant.")
+    parser.add_argument('--rework-prompt', type=str, default=SYSTEM_PROMPT, help="Prompt pour le raffinement de la transcription.")
+    parser.add_argument('--rework-model', type=str, default="qwen3:14b", help="Modèle à utiliser pour le raffinement.")
+    parser.add_argument('--rework-output-file', type=str, help="Fichier pour sauvegarder la transcription raffinée.")
     
     parsed_args = parser.parse_args()
     

@@ -16,12 +16,16 @@ Auteur: Cloud Temple - LLMaaS Team
 Version: 2.0.0
 Date: 2025-06-04
 """
-import requests
+import requests # Gardé pour l'instant pour la compatibilité si aiohttp échoue, mais sera supprimé à terme
 import argparse
 import os
 import json
 import sys
 import glob
+import time
+import asyncio
+import aiohttp
+import aiofiles
 from pathlib import Path
 
 # --- Configuration ---
@@ -150,30 +154,24 @@ def expand_file_patterns(patterns, silent=False):
     
     return unique_files
 
-def transcribe_audio(api_url, file_path, language, token, prompt=None, debug=False, silent=False):
+# La fonction synchrone originale `transcribe_audio` et `print_transcription_result` sont supprimées.
+# Seules les versions asynchrones subsistent.
+# Le wrapper `transcribe_audio_async_wrapper` est également supprimé.
+
+async def transcribe_audio(api_url, file_path, language, token, prompt=None, debug=False, silent=False, task_id=None):
     """
-    Envoie un fichier audio à l'API Cloud Temple pour transcription.
-
-    Args:
-        api_url (str): URL de l'API de transcription.
-        file_path (str): Chemin vers le fichier audio.
-        language (str): Code langue (ex: "fr", "en", "de", "es").
-        token (str): Token d'authentification Bearer.
-        prompt (str, optional): Prompt pour guider la transcription.
-        debug (bool): Mode debug pour afficher les payloads.
-        silent (bool): Mode silencieux pour supprimer l'affichage.
-
-    Returns:
-        tuple: (success: bool, result: str) - succès et texte transcrit ou message d'erreur.
+    Envoie un fichier audio à l'API Cloud Temple pour transcription (version asynchrone).
+    ... (docstring reste similaire mais mentionner async)
     """
     if not token or not token.strip():
         return False, f"Token d'authentification manquant ou vide. Veuillez le fournir via l'option -t ou dans '{CONFIG_FILE}'."
     
-    if not os.path.exists(file_path):
+    # Utiliser Path pour une meilleure gestion des chemins
+    audio_path = Path(file_path)
+    if not await asyncio.to_thread(audio_path.exists): # Vérification asynchrone de l'existence du fichier
         return False, f"Le fichier audio '{file_path}' n'a pas été trouvé."
 
-    # Vérifier l'extension du fichier
-    file_extension = os.path.splitext(file_path)[1].lower()
+    file_extension = audio_path.suffix.lower()
     mime_type = SUPPORTED_MIME_TYPES.get(file_extension)
     
     if not mime_type:
@@ -181,9 +179,10 @@ def transcribe_audio(api_url, file_path, language, token, prompt=None, debug=Fal
         mime_type = "application/octet-stream"
 
     if debug:
-        print_debug(f"Extension détectée: {file_extension}", silent)
-        print_debug(f"Type MIME: {mime_type}", silent)
-        print_debug(f"Taille du fichier: {format_file_size(file_path)}", silent)
+        file_size_str = await asyncio.to_thread(format_file_size, file_path)
+        print_debug(f"[{task_id}] Extension détectée: {file_extension}", silent)
+        print_debug(f"[{task_id}] Type MIME: {mime_type}", silent)
+        print_debug(f"[{task_id}] Taille du fichier: {file_size_str}", silent)
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -191,101 +190,243 @@ def transcribe_audio(api_url, file_path, language, token, prompt=None, debug=Fal
     }
 
     try:
-        with open(file_path, "rb") as audio_file:
-            files = {"file": (os.path.basename(file_path), audio_file, mime_type)}
-            data = {
-                "language": language, 
-                "response_format": "json", 
-                "temperature": "0"
-            }
-            
-            # Ajouter le prompt s'il est fourni
-            if prompt and prompt.strip():
-                data["prompt"] = prompt.strip()
+        form_data = aiohttp.FormData()
+        form_data.add_field('language', language)
+        form_data.add_field('response_format', 'json')
+        form_data.add_field('temperature', '0') # Garder la température à 0 pour la cohérence
+
+        if prompt and prompt.strip():
+            form_data.add_field('prompt', prompt.strip())
+            if debug:
+                print_debug(f"[{task_id}] Prompt utilisé: '{prompt.strip()}'", silent)
+        
+        async with aiofiles.open(audio_path, "rb") as afp:
+            audio_content = await afp.read()
+        form_data.add_field('file', audio_content, filename=audio_path.name, content_type=mime_type)
+        
+        if debug:
+            # Affichage partiel pour FormData
+            print_debug(f"[{task_id}] En-têtes de la requête (aiohttp):", silent)
+            debug_headers_display = headers.copy()
+            debug_headers_display["Authorization"] = f"Bearer {token[:20]}..." if len(token) > 20 else f"Bearer {token}"
+            if not silent:
+                # Affichage des champs non-fichier
+                data_fields_for_debug = {
+                    "language": language, "response_format": "json", "temperature": "0"
+                }
+                if prompt and prompt.strip(): data_fields_for_debug["prompt"] = prompt.strip()
+                async with print_lock: # Protéger l'affichage
+                    pretty_print_json(debug_headers_display, f"Task {task_id} Headers", TermColors.DEBUG)
+                    pretty_print_json(data_fields_for_debug, f"Task {task_id} Request Data (non-file parts)", TermColors.DEBUG)
+            print_debug(f"[{task_id}] Fichier: {audio_path.name} ({mime_type})", silent)
+
+        print_info(f"[{task_id}] Envoi du fichier '{TermColors.BOLD}{audio_path.name}{TermColors.ENDC}' "
+                  f"({await asyncio.to_thread(format_file_size, file_path)}) pour transcription en langue '{TermColors.BOLD}{language}{TermColors.ENDC}'...", silent)
+
+        # Utiliser un timeout pour la session aiohttp
+        timeout = aiohttp.ClientTimeout(total=300) # Timeout total de 5 minutes, ajustable
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.post(api_url, headers=headers, data=form_data) as response:
+                response_text = await response.text()
                 if debug:
-                    print_debug(f"Prompt utilisé: '{prompt.strip()}'", silent)
+                    print_debug(f"[{task_id}] Code de réponse HTTP: {response.status}", silent)
+                    print_debug(f"[{task_id}] En-têtes de réponse: {dict(response.headers)}", silent)
 
-            if debug:
-                print_debug("En-têtes de la requête:", silent)
-                debug_headers = headers.copy()
-                debug_headers["Authorization"] = f"Bearer {token[:20]}..." if len(token) > 20 else f"Bearer {token}"
-                if not silent:
-                    pretty_print_json(debug_headers, "Headers", TermColors.DEBUG)
-                
-                print_debug("Données de la requête:", silent)
-                if not silent:
-                    pretty_print_json(data, "Request Data", TermColors.DEBUG)
-                
-                print_debug(f"Fichier: {os.path.basename(file_path)} ({mime_type})", silent)
-            
-            print_info(f"Envoi du fichier '{TermColors.BOLD}{os.path.basename(file_path)}{TermColors.ENDC}' "
-                      f"({format_file_size(file_path)}) pour transcription en langue '{TermColors.BOLD}{language}{TermColors.ENDC}'...", silent)
-            
-            response = requests.post(api_url, headers=headers, files=files, data=data)
+                if response.status == 200:
+                    try:
+                        result_json = await response.json(content_type=None) # Accepter tout type de contenu pour le JSON
+                        if debug and not silent:
+                            async with print_lock:
+                                pretty_print_json(result_json, f"Task {task_id} Response JSON", TermColors.OKGREEN)
+                        
+                        transcribed_text = result_json.get("text", "Aucun texte détecté dans la réponse JSON.")
+                        return True, transcribed_text
+                    except (json.JSONDecodeError, aiohttp.ContentTypeError) as json_err:
+                        if debug:
+                            print_debug(f"[{task_id}] Réponse brute (non-JSON ou erreur de décodage): {response_text}. Erreur: {json_err}", silent)
+                        # Retourner le texte brut si le JSON échoue mais le statut est 200
+                        return True, f"Réponse reçue (statut 200, non-JSON ou erreur décodage): {response_text}"
+                elif response.status == 401:
+                    return False, "Erreur d'authentification (401). Vérifiez votre token."
+                else:
+                    error_message = f"Erreur API (code {response.status}): {response_text}"
+                    try:
+                        error_json = json.loads(response_text)
+                        if debug and not silent:
+                            async with print_lock:
+                                pretty_print_json(error_json, f"Task {task_id} Error Response JSON", TermColors.FAIL)
+                        error_message += f"\nDétail de l'erreur JSON: {error_json}"
+                    except json.JSONDecodeError:
+                        if debug:
+                            print_debug(f"[{task_id}] Réponse d'erreur brute: {response_text}", silent)
+                    return False, error_message
 
-            if debug:
-                print_debug(f"Code de réponse HTTP: {response.status_code}", silent)
-                print_debug(f"En-têtes de réponse: {dict(response.headers)}", silent)
-
-            if response.status_code == 200:
-                try:
-                    result = response.json()
-                    if debug and not silent:
-                        pretty_print_json(result, "Response JSON", TermColors.OKGREEN)
-                    
-                    transcribed_text = result.get("text", "Aucun texte détecté dans la réponse JSON.")
-                    return True, transcribed_text
-                except requests.exceptions.JSONDecodeError:
-                    if debug:
-                        print_debug(f"Réponse brute (non-JSON): {response.text}", silent)
-                    return True, f"Réponse reçue (non-JSON, statut 200): {response.text}"
-            elif response.status_code == 401:
-                return False, "Erreur d'authentification (401). Vérifiez votre token."
-            else:
-                error_message = f"Erreur API (code {response.status_code}): {response.text}"
-                try:
-                    error_json = response.json()
-                    if debug and not silent:
-                        pretty_print_json(error_json, "Error Response JSON", TermColors.FAIL)
-                    error_message += f"\nDétail de l'erreur JSON: {error_json}"
-                except requests.exceptions.JSONDecodeError:
-                    if debug:
-                        print_debug(f"Réponse d'erreur brute: {response.text}", silent)
-                return False, error_message
-
-    except FileNotFoundError:
+    except FileNotFoundError: # Devrait être attrapé par la vérification Path.exists() plus haut
         return False, f"Le fichier audio '{file_path}' n'a pas été trouvé."
-    except requests.exceptions.RequestException as e:
-        return False, f"Erreur de connexion à l'API: {e}"
+    except aiohttp.ClientError as e:
+        return False, f"Erreur de connexion à l'API (aiohttp) pour la tâche {task_id}: {e}"
     except Exception as e:
-        return False, f"Une erreur inattendue est survenue: {e}"
+        return False, f"Une erreur inattendue est survenue dans la tâche {task_id}: {e}"
 
-def print_transcription_result(file_path, language, success, result, file_index=None, total_files=None):
-    """Affiche le résultat de transcription de manière formatée."""
+print_lock = asyncio.Lock() # Remplacer threading.Lock par asyncio.Lock
+
+async def main_async(args, config):
+    """Fonction principale asynchrone pour gérer les transcriptions."""
+    # Utiliser des variables locales à main_async pour les stats, puis les retourner
+    local_total_success = 0
+    local_total_errors = 0
+
+    if not args.token or not args.token.strip() or args.token == "VOTRE_TOKEN_BEARER_ICI":
+        fatal_error(f"Token d'authentification manquant ou invalide. "
+                   f"Veuillez le fournir via l'option -t ou le configurer dans '{CONFIG_FILE}'.", args.silent)
+
+    if args.debug and not args.silent:
+        print_debug("Mode debug activé", args.silent)
+        print_debug(f"Configuration chargée depuis: {CONFIG_FILE}", args.silent)
+        print_debug(f"URL API: {args.api_url}", args.silent)
+        print_debug(f"Langue: {args.language}", args.silent)
+        print_debug(f"Prompt: {args.prompt if args.prompt else 'Aucun'}", args.silent)
+        print_debug(f"Passes: {args.runs}", args.silent)
+        print_debug(f"Concurrence: {args.concurrency}", args.silent)
+
+    print_info(f"Utilisation de l'URL API: {TermColors.UNDERLINE}{args.api_url}{TermColors.ENDC}", args.silent)
+    
+    files_to_process_patterns = expand_file_patterns(args.file_patterns, args.silent)
+    
+    if not files_to_process_patterns:
+        fatal_error("Aucun fichier audio trouvé correspondant aux patterns spécifiés.", args.silent)
+    
+    if args.debug and not args.silent:
+        print_debug(f"Fichiers trouvés (avant répétition pour les passes): {len(files_to_process_patterns)}", args.silent)
+        for f_path in files_to_process_patterns:
+            print_debug(f"  - {f_path} ({format_file_size(f_path)})", args.silent)
+
+    # Créer la liste complète des tâches à exécuter (fichier * nombre de passes)
+    all_tasks_to_run = []
+    task_counter = 0
+    for run_idx in range(args.runs):
+        for file_idx, file_path in enumerate(files_to_process_patterns):
+            task_counter +=1
+            all_tasks_to_run.append({
+                "file_path": file_path,
+                "run_index": run_idx + 1,
+                "file_index_in_run": file_idx + 1,
+                "total_files_in_run": len(files_to_process_patterns),
+                "task_id": task_counter # ID unique pour chaque requête
+            })
+
+    print_info(f"Lancement de {TermColors.BOLD}{len(all_tasks_to_run)}{TermColors.ENDC} tâche(s) de transcription au total, "
+              f"avec une concurrence maximale de {TermColors.BOLD}{args.concurrency}{TermColors.ENDC} tâche(s).", args.silent)
+
+    semaphore = asyncio.Semaphore(args.concurrency)
+    tasks_coroutines = [] # Renommé pour plus de clarté
+
+    async def transcribe_with_semaphore(task_info):
+        # Cette fonction retourne maintenant True pour succès, False pour échec.
+        # Le comptage se fera dans main_async après asyncio.gather.
+        async with semaphore:
+            success, result = await transcribe_audio(
+                args.api_url,
+                task_info["file_path"],
+                args.language,
+                args.token,
+                args.prompt,
+                args.debug,
+                args.silent,
+                task_info["task_id"]
+            )
+            
+            # Utiliser print_lock pour l'affichage
+            if args.silent:
+                if success:
+                    # En mode silencieux, on pourrait vouloir un format plus simple ou pas de lock
+                    # Pour l'instant, on garde le lock pour éviter tout entremêlement si on ajoute des logs
+                    async with print_lock:
+                        print(result.strip())
+            else:
+                await print_transcription_result( # print_transcription_result est maintenant asynchrone
+                    task_info["file_path"],
+                    args.language,
+                    success,
+                    result,
+                    task_info["file_index_in_run"],
+                    task_info["total_files_in_run"],
+                    task_info["run_index"],
+                    args.runs,
+                    task_info["task_id"]
+                )
+            
+            # La mise à jour des compteurs est retirée d'ici
+            return success # Retourner le statut pour une éventuelle gestion centralisée des résultats
+
+    for task_info_item in all_tasks_to_run:
+        tasks_coroutines.append(transcribe_with_semaphore(task_info_item))
+
+    # Exécuter toutes les coroutines avec asyncio.gather
+    # return_exceptions=True permet de ne pas arrêter gather à la première exception
+    results = await asyncio.gather(*tasks_coroutines, return_exceptions=True)
+    
+    # Compter les succès et erreurs à partir des résultats de gather
+    for result_item in results:
+        if isinstance(result_item, Exception):
+            # Gérer les exceptions levées par les tâches si nécessaire
+            # Pour l'instant, on les compte comme des erreurs.
+            print_error(f"Une tâche a échoué avec une exception: {result_item}", args.silent)
+            local_total_errors += 1
+        elif result_item is True: # Si la tâche a retourné True (succès)
+            local_total_success += 1
+        else: # Si la tâche a retourné False (échec géré)
+            local_total_errors += 1
+            
+    return local_total_success, local_total_errors, len(all_tasks_to_run)
+
+
+# Adapter print_transcription_result pour être asynchrone à cause du print_lock asynchrone
+async def print_transcription_result(file_path, language, success, result, file_index=None, total_files=None, run_index=None, total_runs=None, task_id=None):
+    """Affiche le résultat de transcription de manière formatée (version asynchrone)."""
+    prefix = ""
+    if task_id is not None:
+        prefix = f"[Tâche {task_id}] "
+    
     file_indicator = ""
-    if file_index is not None and total_files is not None:
-        file_indicator = f" [{file_index}/{total_files}]"
-    
-    print(f"\n{TermColors.HEADER}{'='*60}{TermColors.ENDC}")
-    print(f"{TermColors.HEADER}📄 Transcription{file_indicator} - '{TermColors.BOLD}{os.path.basename(file_path)}{TermColors.ENDC}' "
-          f"({TermColors.BOLD}{language}{TermColors.ENDC}){TermColors.HEADER}{TermColors.ENDC}")
-    print(f"{TermColors.HEADER}{'='*60}{TermColors.ENDC}")
-    
-    if success:
-        print(f"{TermColors.OKGREEN}{result}{TermColors.ENDC}")
-    else:
-        print(f"{TermColors.FAIL}❌ {result}{TermColors.ENDC}")
-    
-    print(f"{TermColors.HEADER}{'='*60}{TermColors.ENDC}\n")
+    # Ajustement pour une meilleure clarté de l'indicateur de fichier/passe
+    if run_index is not None and total_runs is not None:
+        if total_files > 1 : # Si plusieurs fichiers par passe
+             file_indicator = f" [Passe {run_index}/{total_runs} | Fichier {file_index}/{total_files}]"
+        else: # Si un seul fichier par passe (ou si total_files n'est pas pertinent pour le run_index)
+             file_indicator = f" [Passe {run_index}/{total_runs}]"
+    elif file_index is not None and total_files is not None: # Cas d'un seul run global, mais plusieurs fichiers
+        file_indicator = f" [Fichier {file_index}/{total_files}]"
+
+    header_line = f"{TermColors.HEADER}{'='*60}{TermColors.ENDC}"
+    title_line = (f"{TermColors.HEADER}{prefix}📄 Transcription{file_indicator} - "
+                  f"'{TermColors.BOLD}{os.path.basename(file_path)}{TermColors.ENDC}' "
+                  f"({TermColors.BOLD}{language}{TermColors.ENDC}){TermColors.HEADER}{TermColors.ENDC}")
+
+    async with print_lock: # Utiliser le asyncio.Lock
+        print(f"\n{header_line}")
+        print(title_line)
+        print(header_line)
+        if success:
+            print(f"{TermColors.OKGREEN}{result}{TermColors.ENDC}")
+        else:
+            print(f"{TermColors.FAIL}❌ {result}{TermColors.ENDC}")
+        print(f"{header_line}\n")
+
 
 if __name__ == "__main__":
-    config_data = load_config()
+    # Initialisation des compteurs de statistiques au début de la section __main__
+    final_success_count = 0
+    final_error_count = 0
+    total_tasks_executed = 0 # Assurer l'initialisation
+
+    config_data = load_config() # Charger la config en mode non-silencieux initialement
     config = config_data if isinstance(config_data, dict) else {
-        "api_url": DEFAULT_API_URL, 
-        "api_token": None, 
+        "api_url": DEFAULT_API_URL,
+        "api_token": None,
         "default_language": DEFAULT_LANGUAGE
     }
-    
+
     # Création du parser avec une description colorée et engageante
     class ColoredHelpFormatter(argparse.RawDescriptionHelpFormatter):
         def _format_action_invocation(self, action):
@@ -356,6 +497,20 @@ if __name__ == "__main__":
         action="store_true",
         help="Mode silencieux: affiche uniquement les transcriptions sur stdout (idéal pour redirection)"
     )
+    
+    # --- Nouvelles options pour les tests de charge ---
+    parser.add_argument(
+        "-r", "--runs",
+        type=int,
+        default=1,
+        help="Nombre total de passes à exécuter. Défaut: 1"
+    )
+    parser.add_argument(
+        "-c", "--concurrency",
+        type=int,
+        default=1,
+        help="Nombre de requêtes parallèles par passe. Défaut: 1"
+    )
 
     args = parser.parse_args()
 
@@ -378,6 +533,8 @@ if __name__ == "__main__":
         print_debug(f"URL API: {args.api_url}", args.silent)
         print_debug(f"Langue: {args.language}", args.silent)
         print_debug(f"Prompt: {args.prompt if args.prompt else 'Aucun'}", args.silent)
+        print_debug(f"Passes: {args.runs}", args.silent)
+        print_debug(f"Concurrence: {args.concurrency}", args.silent)
 
     print_info(f"Utilisation de l'URL API: {TermColors.UNDERLINE}{args.api_url}{TermColors.ENDC}", args.silent)
     
@@ -392,52 +549,56 @@ if __name__ == "__main__":
         for f in files_to_process:
             print_debug(f"  - {f} ({format_file_size(f)})", args.silent)
 
-    print_info(f"Traitement de {TermColors.BOLD}{len(files_to_process)}{TermColors.ENDC} fichier(s) audio...", args.silent)
+    # --- Logique de test de charge (maintenant asynchrone) ---
+    global_start_time = time.time()
     
-    # Statistiques
-    total_success = 0
-    total_errors = 0
-    
-    # Traitement de chaque fichier
-    for i, file_path in enumerate(files_to_process, 1):
-        if args.debug and not args.silent:
-            print_debug(f"\n--- Traitement du fichier {i}/{len(files_to_process)}: {file_path} ---", args.silent)
+    # Exécuter la logique principale asynchrone
+    loop = asyncio.get_event_loop()
+    try:
+        # Récupérer les stats depuis main_async
+        # final_success_count, final_error_count, et total_tasks_executed sont mis à jour ici.
+        final_success_count, final_error_count, total_tasks_executed = loop.run_until_complete(main_async(args, config))
+    except KeyboardInterrupt:
+        print_warning("\nInterruption par l'utilisateur. Arrêt des tâches...", args.silent)
+        # Les valeurs de final_success_count, final_error_count, total_tasks_executed 
+        # resteront à leurs valeurs initiales (0) si l'interruption se produit avant la fin de main_async.
+        # Gérer l'annulation des tâches en cours si nécessaire (plus complexe avec gather)
+        # Pour l'instant, on laisse les tâches se terminer ou être annulées par l'arrêt de la boucle
+        sys.exit(1)
+    finally:
+        # S'assurer que la boucle d'événements est correctement fermée
+        # loop.close() # Peut causer des erreurs si la boucle est déjà fermée ou utilisée ailleurs
+
+        global_end_time = time.time()
+        total_duration = global_end_time - global_start_time
         
-        success, result = transcribe_audio(
-            args.api_url, 
-            file_path, 
-            args.language, 
-            args.token, 
-            args.prompt,
-            args.debug and not args.silent,
-            args.silent
-        )
-        
-        if args.silent:
-            # Mode silencieux : afficher uniquement le texte transcrit
-            if success:
-                print(result.strip())
-            # En mode silent, on n'affiche pas les erreurs sur stdout
-        else:
-            # Mode normal avec formatage
-            print_transcription_result(
-                file_path, 
-                args.language, 
-                success, 
-                result, 
-                i, 
-                len(files_to_process)
-            )
-        
-        if success:
-            total_success += 1
-        else:
-            total_errors += 1
-    
-    # Résumé final (seulement en mode non-silent)
-    if not args.silent:
-        print(f"\n{TermColors.HEADER}📊 RÉSUMÉ FINAL{TermColors.ENDC}")
-        print(f"{TermColors.OKGREEN}✅ Succès: {total_success}{TermColors.ENDC}")
-        if total_errors > 0:
-            print(f"{TermColors.FAIL}❌ Erreurs: {total_errors}{TermColors.ENDC}")
-        print(f"{TermColors.OKCYAN}📁 Total traité: {len(files_to_process)} fichier(s){TermColors.ENDC}")
+        # Résumé final (seulement en mode non-silent)
+        if not args.silent:
+            print(f"\n{TermColors.HEADER}📊 RÉSUMÉ FINAL DES TESTS DE CHARGE{TermColors.ENDC}")
+            print(f"{TermColors.OKCYAN}Durée totale: {total_duration:.2f} secondes{TermColors.ENDC}")
+            print(f"{TermColors.OKCYAN}Nombre de passes configurées: {args.runs}{TermColors.ENDC}")
+            print(f"{TermColors.OKCYAN}Concurrence maximale: {args.concurrency}{TermColors.ENDC}")
+            
+            # Le nombre de fichiers par passe n'est plus directement pertinent de la même manière
+            # On affiche le nombre total de fichiers uniques traités si args.runs > 1
+            # ou simplement le nombre de fichiers si args.runs == 1
+            num_unique_files = len(expand_file_patterns(args.file_patterns, True)) # True pour silent
+            if args.runs > 1:
+                 print(f"{TermColors.OKCYAN}Nombre de fichiers uniques par passe: {num_unique_files}{TermColors.ENDC}")
+            else:
+                 print(f"{TermColors.OKCYAN}Nombre de fichiers traités: {num_unique_files}{TermColors.ENDC}")
+
+            print(f"{TermColors.BOLD}Requêtes totales effectuées: {total_tasks_executed}{TermColors.ENDC}")
+            print(f"{TermColors.OKGREEN}✅ Succès: {final_success_count}{TermColors.ENDC}")
+            if final_error_count > 0:
+                print(f"{TermColors.FAIL}❌ Erreurs: {final_error_count}{TermColors.ENDC}")
+            
+            if total_duration > 0 and total_tasks_executed > 0:
+                rps = total_tasks_executed / total_duration
+                print(f"{TermColors.OKCYAN}Performance: {rps:.2f} requêtes/seconde{TermColors.ENDC}")
+            
+            # Le "temps moyen par passe" est moins significatif avec la concurrence totale.
+            # On pourrait calculer le temps moyen par tâche si pertinent.
+            if total_tasks_executed > 0:
+                avg_task_time = total_duration / total_tasks_executed
+                print(f"{TermColors.OKCYAN}Temps moyen par tâche (incluant attente sémaphore): {avg_task_time:.2f} secondes{TermColors.ENDC}")

@@ -14,6 +14,8 @@ This script automatically extracts facts and relationships between facts from a 
 - **Interactive Mode**: Allows validation/modification of extraction for each chunk.
 - **Rich Interface**: Colorful display with progress bars and detailed summaries.
 - **Flexible Configuration**: Parameters configurable via command line and environment variables.
+- **Reasoning Model Support**: Automatically handles responses from models that include thinking blocks (e.g., `<think>...</think>`) before JSON.
+- **Robust JSON Parsing**: Reliably extracts JSON content even from malformed responses or those containing extraneous text.
 
 ## 🧠 Specialized Ontologies
 
@@ -326,7 +328,7 @@ Error: LLMAAS_API_KEY environment variable is not defined.
 ```
 Warning: Invalid JSON response for chunk 2
 ```
-→ Try reducing `--chunk-size-words` or increasing `--max-tokens`.
+→ The script is now more robust and attempts to extract JSON even if the response is malformed. If the error persists, it may be due to a response truncated by the API. In this case, try increasing the `--max-tokens` value.
 
 **API Timeout**
 ```
@@ -335,9 +337,13 @@ API error for chunk 1: timeout
 → The model may be overloaded, try again or change model.
 
 ### Debug Mode
-Use `--debug` to see chunking and diagnose issues:
+Use `--debug` for advanced diagnostics. This option enables very detailed logs, including:
+- Precise text chunking breakdown.
+- Complete JSON payload sent to the API for each chunk.
+- Raw response (status code, headers, and body) received from the API.
 
 ```bash
+# Enable debug mode for thorough analysis
 python getfact.py --file document.txt --debug
 ```
 
