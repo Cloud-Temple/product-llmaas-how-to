@@ -1,0 +1,7 @@
+Le RAG, ou Retrieval-Augmented Generation, est une technique avancée en traitement du langage naturel qui améliore la qualité des modèles de langage (LLMs).
+Le principe est de combiner un modèle de langage pré-entraîné avec un mécanisme de recherche d'informations externe.
+Les composants essentiels du RAG sont :
+1. Un indexeur : Il traite et stocke une grande quantité de documents dans une base de données vectorielle. Chaque document est transformé en un vecteur numérique (embedding).
+2. Un retriever : Lorsque l'utilisateur pose une question, le retriever recherche dans la base de données les documents les plus pertinents par rapport à la question.
+3. Un générateur : Le modèle de langage (LLM) reçoit la question initiale ainsi que le contenu des documents pertinents récupérés. Il utilise ce contexte pour générer une réponse plus précise et factuelle.
+Cette approche permet de réduire les hallucinations des modèles et de baser les réponses sur des connaissances à jour et spécifiques à un domaine.
