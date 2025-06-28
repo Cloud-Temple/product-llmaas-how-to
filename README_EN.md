@@ -123,6 +123,10 @@ Discover the capabilities of the Cloud Temple LLMaaS API through these screensho
 ![PhotoAnalyzer Vision 2](./screenshoot/journal2.png)
 *Second model vision on the newspaper image*
 
+### 📚 Simple RAG Demonstration
+![Simple RAG Demo](./screenshoot/simple_rag.png)
+*Execution of the simple RAG script, showing the vectorization, search, and augmented generation steps*
+
 ## Available Examples
 
 ### 📸 [PhotoAnalyzer](./photoanalyzer/)
