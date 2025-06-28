@@ -27,6 +27,10 @@ Ce répertoire contient une collection d'exemples de code et de scripts démontr
 - 📝 **Prompts configurables** : Support de différents types de synthèse (concis, détaillé, points d'action, Q&A)
 - 📖 **Documentation complète** : README français et anglais avec exemples d'usage détaillés
 
+#### 📚 **Exemples RAG (Retrieval-Augmented Generation)** ✨ *NOUVEAUX EXEMPLES*
+- 🆕 **Simple RAG Demo** : Un script pédagogique pour comprendre les mécanismes de base du RAG avec des vecteurs en mémoire.
+- 🆕 **RAG with Qdrant Demo** : Un exemple complet et conteneurisé utilisant Qdrant comme base de données vectorielle pour des applications RAG plus robustes.
+
 ---
 
 ## À propos de LLMaaS Cloud Temple

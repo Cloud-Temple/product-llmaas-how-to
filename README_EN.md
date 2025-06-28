@@ -27,6 +27,10 @@ This repository contains a collection of code examples and scripts demonstrating
 - 📝 **Configurable prompts**: Support for different summary types (concise, detailed, action items, Q&A)
 - 📖 **Complete documentation**: French and English README with detailed usage examples
 
+#### 📚 **RAG (Retrieval-Augmented Generation) Examples** ✨ *NEW EXAMPLES*
+- 🆕 **Simple RAG Demo**: An educational script to understand the basic mechanics of RAG with in-memory vectors.
+- 🆕 **RAG with Qdrant Demo**: A complete and containerized example using Qdrant as a vector database for more robust RAG applications.
+
 ---
 
 ## About Cloud Temple LLMaaS
