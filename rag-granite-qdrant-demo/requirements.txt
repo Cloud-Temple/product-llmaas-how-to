@@ -1,9 +1,6 @@
-langchain
+qdrant-client
 langchain-community
 langchain-openai
-qdrant-client
-pypdf
 python-dotenv
 requests
-# --- Pour les embeddings via Ollama ---
-langchain-ollama
+langchain
