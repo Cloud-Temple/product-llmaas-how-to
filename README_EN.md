@@ -130,6 +130,12 @@ Intelligent fact and relationship extractor using the LLMaaS API. Capable of aut
 ### 📝 [Summarizer](./summarizer/)
 Advanced text summarization tool using the LLMaaS API. Generates accurate summaries of text or Markdown files of any size with intelligent token-based chunking, parallel batch processing, and contextual continuity between sections.
 
+### 📚 [Simple RAG Demo](./simple_rag_demo/)
+An educational RAG demonstrator to illustrate how Retrieval-Augmented Generation works. It uses the LLMaaS API for embedding and generation, with in-memory vector storage for a clear understanding of the process.
+
+### 📚 [RAG with Qdrant Demo](./rag-granite-qdrant-demo/)
+A complete and containerized RAG demonstrator using Qdrant as a vector database. The LLMaaS API is used for document embedding and generating augmented responses.
+
 ### 📝 [List Models](./list_models/)
 Simple script to list all models available via the LLMaaS API with their details, specifications, and statuses.
 

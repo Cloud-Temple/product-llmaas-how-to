@@ -130,6 +130,12 @@ Extracteur de faits et relations intelligent utilisant l'API LLMaaS. Capable d'e
 ### 📝 [Summarizer](./summarizer/)
 Outil de synthèse de texte avancé utilisant l'API LLMaaS. Génère des synthèses précises de fichiers texte ou Markdown de n'importe quelle taille avec découpage intelligent par tokens, traitement parallèle par lots, et continuité contextuelle entre les sections.
 
+### 📚 [Simple RAG Demo](./simple_rag_demo/)
+Démonstrateur RAG pédagogique pour illustrer le fonctionnement du Retrieval-Augmented Generation. Utilise l'API LLMaaS pour l'embedding et la génération, avec stockage des vecteurs en mémoire pour une compréhension claire du processus.
+
+### 📚 [RAG with Qdrant Demo](./rag-granite-qdrant-demo/)
+Démonstrateur RAG complet et conteneurisé utilisant Qdrant comme base de données vectorielle. L'API LLMaaS est utilisée pour l'embedding des documents et la génération de réponses augmentées.
+
 ### 📝 [List Models](./list_models/)
 Script simple pour lister tous les modèles disponibles via l'API LLMaaS avec leurs détails, spécifications et statuts.
 
