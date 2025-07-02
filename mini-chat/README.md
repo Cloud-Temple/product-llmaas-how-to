@@ -8,7 +8,7 @@ Interface en ligne de commande élégante pour interagir avec les modèles de la
 
 ```bash
 # Naviguez vers le répertoire
-cd exemples/mini-chat/
+cd mini-chat
 
 # Créez un environnement virtuel (recommandé)
 python -m venv .venv

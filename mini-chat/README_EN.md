@@ -8,7 +8,7 @@ An elegant command-line interface to interact with the LLMaaS platform's languag
 
 ```bash
 # Navigate to the directory
-cd exemples/mini-chat/
+cd mini-chat
 
 # Create a virtual environment (recommended)
 python -m venv .venv
