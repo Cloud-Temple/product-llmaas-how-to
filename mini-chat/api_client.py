@@ -118,98 +118,142 @@ async def stream_chat_completions(
                     # Si le statut est OK, on procède au streaming
                     if not silent_mode: # N'affiche pas le nom du modèle si en mode silencieux
                         console.print(f"[bold magenta]{model}:[/bold magenta] ", end="")
-                    async for line in response.aiter_lines():
-                        if line.startswith("data: "):
-                            data_json = line[len("data: "):].strip()
-                            if data_json.startswith("data:"): # Double "data:"
-                                data_json = data_json[len("data:"):]
-                            data_json = data_json.strip() # Strip again after potential second removal
-
-                            if data_json == "[DONE]":
-                                break
-                            try:
-                                if not data_json: continue # Ignore empty data lines
-                                chunk = json.loads(data_json)
-                                if debug_mode:
-                                    console.print("\n[bold blue]--- Chunk API (Reçu) ---[/bold blue]")
-                                    console.print(Syntax(json.dumps(chunk, indent=2), "json", theme="dracula"))
-
-                                content_part = None
-                                tool_calls_in_chunk = None
-
-                                # Priorité à la structure "message" si elle contient des tool_calls, même si done=false
-                                if chunk.get("message", {}).get("tool_calls"):
-                                    message_field = chunk.get("message", {})
-                                    content_part = message_field.get("content") # Peut être vide si seul tool_calls est présent
-                                    tool_calls_in_chunk = message_field.get("tool_calls")
-                                elif chunk.get("choices") and chunk["choices"][0].get("delta"): # Cas standard d'un delta
-                                    delta = chunk["choices"][0].get("delta", {})
-                                    content_part = delta.get("content")
-                                    tool_calls_in_chunk = delta.get("tool_calls")
-                                elif chunk.get("done") and chunk.get("message"): # Cas d'un message final complet sans tool_calls dans le stream
-                                    message_field = chunk.get("message", {})
-                                    content_part = message_field.get("content")
-                                    # tool_calls_in_chunk serait None ici, déjà initialisé
-
-                                if content_part:
-                                    if not silent_mode: # En mode streaming, on affiche toujours si pas silencieux
-                                        console.print(content_part, end="")
-                                    full_response_content += content_part
+                    
+                    buffer = ""
+                    json_payload_buffer = ""
+                    async for raw_chunk in response.aiter_raw():
+                        buffer += raw_chunk.decode('utf-8')
+                        
+                        # On ne traite que les événements complets
+                        while "\n\n" in buffer:
+                            event_string, buffer = buffer.split("\n\n", 1)
                             
-                                if tool_calls_in_chunk:
-                                    for tc_from_chunk in tool_calls_in_chunk:
-                                        if tc_from_chunk.get("index") is not None: # Format delta pour les tool_calls
-                                            idx = tc_from_chunk["index"]
-                                            while idx >= len(tool_calls): 
-                                                tool_calls.append({"id": "", "type": "function", "function": {"name": "", "arguments": ""}})
-                                            
-                                            if tc_from_chunk.get("id"): 
-                                                tool_calls[idx]["id"] = tc_from_chunk["id"]
-                                            # type est généralement 'function', on peut le forcer si besoin ou le prendre du chunk
-                                            # tool_calls[idx]["type"] = tc_from_chunk.get("type", "function") 
-                                            
-                                            current_function = tool_calls[idx].get("function", {"name": "", "arguments": ""})
-                                            chunk_function = tc_from_chunk.get("function", {})
+                            for line in event_string.splitlines():
+                                if line.startswith("data:"):
+                                    content = line[len("data: "):].strip()
+                                    if content == "[DONE]":
+                                        json_payload_buffer = "[DONE]"
+                                        break
+                                    # On ajoute le contenu au buffer JSON
+                                    json_payload_buffer += content
+                            
+                            if json_payload_buffer == "[DONE]":
+                                break
 
-                                            if chunk_function.get("name"):
-                                                current_function["name"] = chunk_function["name"]
-                                            if chunk_function.get("arguments"):
-                                                current_function["arguments"] += chunk_function["arguments"]
-                                            
-                                            # S'assurer que si arguments est vide, il devienne "{}" pour être un JSON valide
-                                            if not current_function["arguments"].strip() and tc_from_chunk.get("done", False): # Seulement à la fin du tool_call delta
-                                                current_function["arguments"] = "{}"
-                                            tool_calls[idx]["function"] = current_function
+                            # On essaie de parser le buffer JSON accumulé
+                            try:
+                                # On ne traite que si le buffer n'est pas vide
+                                if json_payload_buffer:
+                                    chunk = json.loads(json_payload_buffer)
+                                    
+                                    # Si le parsing réussit, on a un objet JSON complet.
+                                    # On le traite et on réinitialise le buffer pour le prochain objet.
+                                    if debug_mode:
+                                        console.print("\n[bold blue]--- Chunk API (Reçu & Décodé) ---[/bold blue]")
+                                        console.print(Syntax(json.dumps(chunk, indent=2), "json", theme="dracula"))
 
-                                        else: # Format complet pour tool_calls (si reçu dans un message final, potentiellement sans id/type au top level)
-                                            # Assurer que le tool_call a la structure attendue avec id et type
-                                            # L'API peut envoyer juste {"function": {...}} dans message.tool_calls
-                                            func_details = tc_from_chunk.get("function")
-                                            if func_details: # S'il y a bien une fonction définie
-                                                # S'assurer que les arguments sont une chaîne JSON valide, même si vide
-                                                if "arguments" not in func_details or not func_details["arguments"]:
-                                                    func_details["arguments"] = "{}"
-                                                elif isinstance(func_details["arguments"], dict): # Devrait déjà être une chaîne par l'API mais au cas où
-                                                    func_details["arguments"] = json.dumps(func_details["arguments"])
+                                    # ... (La logique de traitement du chunk reste identique)
+                                    content_part = None
+                                    tool_calls_in_chunk = None
+                                    if chunk.get("message", {}).get("tool_calls"):
+                                        message_field = chunk.get("message", {})
+                                        content_part = message_field.get("content")
+                                        tool_calls_in_chunk = message_field.get("tool_calls")
+                                    elif chunk.get("choices") and chunk["choices"][0].get("delta"):
+                                        delta = chunk["choices"][0].get("delta", {})
+                                        content_part = delta.get("content")
+                                        tool_calls_in_chunk = delta.get("tool_calls")
+                                    elif chunk.get("done") and chunk.get("message"):
+                                        message_field = chunk.get("message", {})
+                                        content_part = message_field.get("content")
 
-                                                tool_call_to_add = {
-                                                    "id": tc_from_chunk.get("id", f"call_{os.urandom(4).hex()}"), # Générer un ID si manquant
-                                                    "type": tc_from_chunk.get("type", "function"),
-                                                    "function": func_details
-                                                }
-                                                tool_calls.append(tool_call_to_add)
-                                            elif tc_from_chunk.get("id"): # Si c'est un delta mais sans index (improbable mais pour être sûr)
-                                                # On essaie de le fusionner comme un delta
-                                                # Cela nécessite de trouver le bon tool_call existant par ID, ce qui est complexe ici.
-                                                # Pour l'instant, on logue un avertissement si ce cas se produit.
-                                                if debug_mode:
-                                                    console.print(f"[bold yellow]Avertissement: tool_call partiel sans index reçu: {tc_from_chunk}[/bold yellow]")
+                                    # Découpler l'affichage du traitement
+                                    # 1. Affichage en temps réel
+                                    if not silent_mode:
+                                        if content_part:
+                                            # Convertir en chaîne de manière sûre
+                                            if isinstance(content_part, dict):
+                                                content_display = json.dumps(content_part, ensure_ascii=False)
+                                            else:
+                                                content_display = str(content_part)
+                                            console.print(content_display, end="")
+                                        
+                                    if tool_calls_in_chunk:
+                                        for tc in tool_calls_in_chunk:
+                                            if tc.get("function", {}).get("arguments"):
+                                                args_part = tc["function"]["arguments"]
+                                                # Convertir en chaîne de manière sûre
+                                                if isinstance(args_part, dict):
+                                                    args_display = json.dumps(args_part, ensure_ascii=False)
+                                                else:
+                                                    args_display = str(args_part)
+                                                console.print(f"[dim cyan]{args_display}[/dim cyan]", end="")
 
+                                    # 2. Accumulation des données pour l'état final
+                                    if content_part:
+                                        # Convertir en chaîne de manière sûre pour l'accumulation
+                                        if isinstance(content_part, dict):
+                                            full_response_content += json.dumps(content_part, ensure_ascii=False)
+                                        else:
+                                            full_response_content += str(content_part)
+                                
+                                    if tool_calls_in_chunk:
+                                        for tc_from_chunk in tool_calls_in_chunk:
+                                            if tc_from_chunk.get("index") is not None:
+                                                idx = tc_from_chunk["index"]
+                                                while idx >= len(tool_calls): 
+                                                    tool_calls.append({"id": "", "type": "function", "function": {"name": "", "arguments": ""}})
+                                                
+                                                if tc_from_chunk.get("id"): 
+                                                    tool_calls[idx]["id"] = tc_from_chunk["id"]
+                                                
+                                                current_function = tool_calls[idx].get("function", {"name": "", "arguments": ""})
+                                                chunk_function = tc_from_chunk.get("function", {})
 
-                                if chunk.get("usage"): usage_info = chunk["usage"]
-                                if chunk.get("backend"): backend_info = chunk["backend"]
+                                                if chunk_function.get("name"):
+                                                    current_function["name"] = chunk_function["name"]
+                                                if chunk_function.get("arguments"):
+                                                    # Convertir en chaîne de manière sûre pour la concaténation
+                                                    args_to_add = chunk_function["arguments"]
+                                                    if isinstance(args_to_add, dict):
+                                                        current_function["arguments"] += json.dumps(args_to_add, ensure_ascii=False)
+                                                    else:
+                                                        current_function["arguments"] += str(args_to_add)
+                                                
+                                                if not current_function["arguments"].strip() and tc_from_chunk.get("done", False):
+                                                    current_function["arguments"] = "{}"
+                                                tool_calls[idx]["function"] = current_function
+                                            else:
+                                                func_details = tc_from_chunk.get("function")
+                                                if func_details:
+                                                    if "arguments" not in func_details or not func_details["arguments"]:
+                                                        func_details["arguments"] = "{}"
+                                                    elif isinstance(func_details["arguments"], dict):
+                                                        func_details["arguments"] = json.dumps(func_details["arguments"])
+                                                    tool_call_to_add = {
+                                                        "id": tc_from_chunk.get("id", f"call_{os.urandom(4).hex()}"),
+                                                        "type": tc_from_chunk.get("type", "function"),
+                                                        "function": func_details
+                                                    }
+                                                    tool_calls.append(tool_call_to_add)
+                                                elif tc_from_chunk.get("id"):
+                                                    if debug_mode:
+                                                        console.print(f"[bold yellow]Avertissement: tool_call partiel sans index reçu: {tc_from_chunk}[/bold yellow]")
+
+                                    if chunk.get("usage"): usage_info = chunk["usage"]
+                                    if chunk.get("backend"): backend_info = chunk["backend"]
+                                    
+                                    # Réinitialiser le buffer JSON après un succès
+                                    json_payload_buffer = ""
+
                             except json.JSONDecodeError:
-                                console.print(f"\n[bold yellow]Avertissement: Impossible de décoder un chunk JSON: '{data_json}'[/bold yellow]")
+                                # Le JSON est incomplet, on attend le prochain événement pour le compléter.
+                                # On ne fait rien et on continue d'accumuler.
+                                pass
+                        
+                        if json_payload_buffer == "[DONE]":
+                            break
+
                     if not silent_mode : console.print() # Newline after streaming, sauf si silencieux
             else: # Not streaming (stream_enabled is False)
                 response = await client.post(f"{api_url}/chat/completions", json=payload, headers=headers, timeout=120)
@@ -279,3 +323,49 @@ async def stream_chat_completions(
             return None, None, [], None
         
     return full_response_content, usage_info, tool_calls, backend_info
+
+async def get_embeddings(
+    api_url: str, 
+    api_key: str, 
+    texts: List[str], 
+    model: str
+) -> Optional[List[List[float]]]:
+    """
+    Récupère les embeddings pour une liste de textes via l'API LLMaaS.
+
+    Args:
+        api_url: URL de l'API.
+        api_key: Clé d'API.
+        texts: Liste de chaînes de caractères à embedder.
+        model: Le nom du modèle d'embedding à utiliser.
+
+    Returns:
+        Une liste de vecteurs (embeddings), ou None en cas d'erreur.
+    """
+    if not api_key:
+        console.print("[bold red]Erreur: Clé API non configurée.[/bold red]")
+        return None
+    
+    payload = {
+        "input": texts,
+        "model": model,
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            response = await client.post(f"{api_url}/embeddings", json=payload, headers=headers, timeout=60)
+            response.raise_for_status()
+            result = response.json()
+            
+            # Extraire les embeddings de la réponse
+            embeddings = [item["embedding"] for item in result.get("data", [])]
+            return embeddings
+    except httpx.HTTPStatusError as e:
+        console.print(f"[bold red]Erreur API ({e.response.status_code}) lors de la récupération des embeddings: {e.response.text}[/bold red]")
+    except httpx.RequestError as e:
+        console.print(f"[bold red]Erreur de connexion à l'API pour les embeddings: {e}[/bold red]")
+    except Exception as e:
+        console.print(f"[bold red]Erreur inattendue lors de la récupération des embeddings: {e}[/bold red]")
+    
+    return None

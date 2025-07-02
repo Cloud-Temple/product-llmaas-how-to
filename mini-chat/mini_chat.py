@@ -18,589 +18,620 @@ import datetime
 import json
 import os
 import time
+import readline
+from typing import List, Dict, Any, Optional, Tuple
+
+import asyncio
+import os
+import time
 from typing import List, Dict, Any, Optional, Tuple
 
 import click
 import httpx
 from dotenv import load_dotenv
-from rich.console import Console, Group
-from rich.markdown import Markdown
-from rich.panel import Panel
 from rich.prompt import Prompt
-from rich.syntax import Syntax
-from rich.text import Text
-from rich.live import Live
-from rich.spinner import Spinner
 
-# Initialisation de Rich Console
-console = Console()
+# Importer les fonctions et la console depuis ui_utils
+from ui_utils import (
+    console,
+    select_model_interactive,
+    display_tool_call_request,
+    display_tool_call_response,
+    display_stats,
+    clean_thinking_content,
+    Panel,
+    Markdown,
+)
 
-# Charger les variables d'environnement depuis .env
-load_dotenv()
+# Importer les fonctions de sauvegarde/chargement depuis session_manager
+from session_manager import save_session_json, load_session_from_json, save_chat_markdown
+
+# Importer les fonctions RAG depuis rag_core
+from rag_core import get_text_chunks, search_in_vector_database
+
 
 # Importer les définitions d'outils et les fonctions client API
 from tools_definition import TOOL_FUNCTIONS_MAP, TOOLS_AVAILABLE
-from api_client import get_available_models, stream_chat_completions
+from api_client import get_available_models, stream_chat_completions, get_embeddings
+
+# Importer le gestionnaire de commandes
+from command_handler import CommandHandler
+
+from qdrant_utils import QdrantManager # QdrantManager reste ici car il est instancié dans chat_loop
+
+# Débogage du chargement des variables d'environnement
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    print(f"Fichier .env trouvé à l'emplacement : {dotenv_path}")
+    load_dotenv(dotenv_path=dotenv_path)
+else:
+    print("Fichier .env non trouvé.")
 
 API_URL = os.getenv("API_URL", "https://api.ai.cloud-temple.com/v1")
 API_KEY = os.getenv("API_KEY")
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL")
+MAX_TOKENS = os.getenv("MAX_TOKENS")
 
+print(f"API_KEY après getenv: {'Clé trouvée' if API_KEY else 'Clé non trouvée'}")
 
-# --- Fonctions UI ---
-
-def select_model_interactive(models: List[str], current_model: Optional[str]) -> Optional[str]:
-    if not models:
-        console.print("[yellow]Aucun modèle n'a pu être récupéré de l'API.[/yellow]")
-        return current_model
-    console.print("\n[bold green]Modèles disponibles :[/bold green]")
-    for i, model_name in enumerate(models):
-        console.print(f"{i + 1}. {model_name}")
-    current_model_index = -1
-    if current_model and current_model in models:
-        current_model_index = models.index(current_model)
-        console.print(f"\nModèle actuel : [cyan]{current_model}[/cyan] (numéro {current_model_index + 1})")
-    while True:
+class CommandCompleter:
+    """
+    Classe pour gérer l'autocomplétion des commandes et l'historique.
+    """
+    def __init__(self):
+        # Liste des commandes disponibles
+        self.commands = [
+            "/quit", "/exit", "/help", "/history", "/clear", "/model", "/system", "/system_clear",
+            "/save_session", "/load_session", "/savemd", "/tools", "/debug", "/silent", "/stream",
+            "/smol", "/embed", "/rag", "/rag_threshold", "/context", "/qdrant_list", "/qdrant_info",
+            "/qdrant_delete", "/qdrant_clear", "/qdrant_drop"
+        ]
+        
+        # Configurer readline
+        self._setup_readline()
+    
+    def _setup_readline(self):
+        """Configure readline pour l'autocomplétion et l'historique."""
         try:
-            choice_str = Prompt.ask(f"Choisissez un numéro de modèle (ou laissez vide pour garder '{current_model if current_model else 'aucun'}')")
-            if not choice_str and current_model: return current_model
-            if not choice_str and not current_model:
-                 console.print("[yellow]Veuillez choisir un modèle pour commencer.[/yellow]")
-                 continue
-            choice = int(choice_str)
-            if 1 <= choice <= len(models): return models[choice - 1]
-            else: console.print(f"[red]Choix invalide. Entrez un numéro entre 1 et {len(models)}.[/red]")
-        except ValueError: console.print("[red]Entrée invalide. Veuillez entrer un numéro.[/red]")
+            # Configurer l'autocomplétion
+            readline.set_completer(self._complete)
+            readline.set_completer_delims(' \t\n`!@#$%^&*()=+[{]}\\|;:\'",<>?')
+            
+            # Configuration de l'autocomplétion - plusieurs variantes pour compatibilité
+            readline.parse_and_bind("tab: complete")
+            readline.parse_and_bind("set completion-ignore-case on")
+            readline.parse_and_bind("set show-all-if-ambiguous on")
+            
+            # Configuration de l'historique
+            readline.parse_and_bind("set editing-mode emacs")
+            readline.parse_and_bind("\"\\e[A\": history-search-backward")
+            readline.parse_and_bind("\"\\e[B\": history-search-forward")
+            
+            # Charger l'historique depuis un fichier si il existe
+            history_file = os.path.expanduser("~/.minichat_history")
+            try:
+                readline.read_history_file(history_file)
+            except FileNotFoundError:
+                pass  # Pas d'historique existant
+            
+            # Limiter la taille de l'historique
+            readline.set_history_length(1000)
+            
+            
+        except ImportError:
+            # readline n'est pas disponible (Windows sans pyreadline)
+            pass
         except Exception as e:
-            console.print(f"[red]Erreur lors de la sélection: {e}[/red]")
-            return current_model
-
-def display_tool_call_request(tool_call: Dict[str, Any]):
-    func_name = tool_call.get("function", {}).get("name")
-    raw_func_args = tool_call.get("function", {}).get("arguments", "{}")
+            # Ignorer silencieusement les erreurs de configuration readline
+            pass
     
-    func_args: Dict[str, Any]
-    if isinstance(raw_func_args, str):
-        try:
-            func_args = json.loads(raw_func_args)
-        except json.JSONDecodeError:
-            func_args = {"raw_arguments": raw_func_args} # Garder comme chaîne si non-JSON
-    elif isinstance(raw_func_args, dict):
-        func_args = raw_func_args # C'est déjà un dictionnaire
-    else:
-        func_args = {"unknown_arguments_type": str(raw_func_args)}
-
-    group_elements = Group(
-        Text(f"Appel à l'outil : {func_name}", style="bold cyan"),
-        Text(f"ID de l'appel : {tool_call.get('id', 'N/A')}"),
-        Text("Arguments :"),
-        Syntax(json.dumps(func_args, indent=2), "json", theme="dracula", line_numbers=True)
-    )
-    console.print(Panel(group_elements, title="🛠️ Demande d'outil", border_style="yellow", expand=False))
-
-def display_tool_call_response(tool_call_id: str, function_name: str, result: str):
-    display_result = result
-    if len(result) > 500: display_result = result[:500] + "\n[... Résultat tronqué ...]"
-    panel_content = f"[bold green]Résultat de l'outil : {function_name}[/bold green]\n"
-    panel_content += f"ID de l'appel : {tool_call_id}\n"
-    panel_content += "Réponse :\n"
-    if "\n" in display_result or len(display_result) > 80:
-         console.print(Panel(Markdown(f"```\n{display_result}\n```"), title="⚙️ Réponse d'outil", border_style="green", expand=False))
-    else:
-         console.print(Panel(Text(display_result), title="⚙️ Réponse d'outil", border_style="green", expand=False))
-
-def display_stats(usage_info: Optional[Dict[str, Any]], backend_info: Optional[Dict[str, Any]]):
-    if not usage_info: return
-    stats_line = Text("📊 ", style="dim white")
-    prompt_tokens = usage_info.get("prompt_tokens", 0)
-    completion_tokens = usage_info.get("completion_tokens", 0)
-    reasoning_tokens_val = usage_info.get("reasoning_tokens", 0)
-    calculated_total = prompt_tokens + completion_tokens + reasoning_tokens_val
-    total_tokens = usage_info.get("total_tokens", calculated_total)
-    tokens_per_sec = usage_info.get("tokens_per_second")
-    stats_line.append("Entrée: ", style="white"); stats_line.append(str(prompt_tokens), style="cyan")
-    stats_line.append(" | Complétion: ", style="white"); stats_line.append(str(completion_tokens), style="cyan")
-    stats_line.append(" | Raisonnement: ", style="white"); stats_line.append(str(reasoning_tokens_val), style="cyan")
-    stats_line.append(" | Total: ", style="white"); stats_line.append(str(total_tokens), style="bold cyan")
-    if tokens_per_sec is not None:
-        stats_line.append(" | Vitesse: ", style="white"); stats_line.append(f"{tokens_per_sec:.2f} t/s", style="green")
-    if usage_info.get("estimated"): stats_line.append(" (estimé)", style="yellow")
-    # backend_text = None
-    # if backend_info:
-    #     backend_text = Text("⚙️ Backend: ", style="dim white")
-    #     items = [Text(f"{backend_info[k]}", style="blue") if k == "machine_name" else Text(f"({backend_info[k]})", style="dim blue") for k in ["machine_name", "engine_type"] if backend_info.get(k)]
-    #     backend_text.append(" ".join(str(item) for item in items))
-    console.print(Panel(stats_line, border_style="dim white", expand=False, padding=(0,1)))
-    # if backend_text: console.print(Panel(backend_text, border_style="dim white", expand=False, padding=(0,1)))
-
-# --- Fonctions de Sauvegarde et Chargement ---
-def save_session_json(session_data: Dict[str, Any], filename: str):
-    try:
-        if not filename.lower().endswith(".json"): filename += ".json"
-        dir_name = os.path.dirname(filename)
-        if dir_name: os.makedirs(dir_name, exist_ok=True)
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(session_data, f, indent=2, ensure_ascii=False)
-        console.print(f"[green]Session sauvegardée en JSON dans '{os.path.abspath(filename)}'[/green]")
-    except Exception as e: console.print(f"[red]Erreur lors de la sauvegarde de la session JSON : {e}[/red]")
-
-def load_session_from_json(filename: str) -> Optional[Dict[str, Any]]:
-    try:
-        if not os.path.exists(filename):
-            console.print(f"[red]Erreur: Le fichier de session '{filename}' n'existe pas.[/red]")
-            return None
-        with open(filename, 'r', encoding='utf-8') as f: session_data = json.load(f)
-        if "metadata" not in session_data or "history" not in session_data:
-            console.print(f"[red]Erreur: Fichier de session '{filename}' mal formaté (metadata ou history manquant).[/red]")
-            return None
-        return session_data
-    except Exception as e:
-        console.print(f"[red]Erreur lors du chargement de la session JSON depuis '{filename}': {e}[/red]")
-        return None
-
-def save_chat_markdown(messages_history: List[Dict[str, Any]], filename: str, session_metadata: Optional[Dict[str,Any]] = None):
-    try:
-        if not filename.lower().endswith(".md"): filename += ".md"
-        dir_name = os.path.dirname(filename)
-        if dir_name: os.makedirs(dir_name, exist_ok=True)
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(f"# Historique du Chat LLMaaS ({datetime.datetime.now().strftime('%Y-%m-%d %H:%M')})\n\n")
-            if session_metadata:
-                f.write("## Paramètres de Session\n")
-                for key, value in session_metadata.items():
-                    if value is not None: f.write(f"- **{key.replace('_', ' ').capitalize()}**: `{value}`\n")
-                f.write("\n")
-            for msg in messages_history:
-                role = msg.get("role", "unknown").capitalize()
-                content = msg.get("content")
-                tool_calls = msg.get("tool_calls")
-                f.write(f"## {role}\n\n")
-                if content: f.write(f"{content}\n\n")
-                if tool_calls:
-                    f.write("Appels d'outils:\n")
-                    for tc in tool_calls:
-                        func_name = tc.get("function", {}).get("name", "N/A")
-                        func_args = tc.get("function", {}).get("arguments", "{}")
-                        f.write(f"- **Outil:** `{func_name}`\n")
-                        f.write(f"  - **ID:** `{tc.get('id', 'N/A')}`\n")
-                        f.write(f"  - **Arguments:**\n    ```json\n    {func_args}\n    ```\n\n")
-                if msg.get("role") == "tool":
-                    tool_call_id = msg.get("tool_call_id", "N/A")
-                    f.write(f"Réponse de l'outil (ID: `{tool_call_id}`):\n")
-                    f.write(f"```\n{content}\n```\n\n")
-            console.print(f"[green]Chat sauvegardé en Markdown dans '{os.path.abspath(filename)}'[/green]")
-    except Exception as e: console.print(f"[red]Erreur lors de la sauvegarde Markdown : {e}[/red]")
-
-# --- Logique principale du Chat ---
-async def chat_loop(
-    api_url_param: str, 
-    api_key_param: str, 
-    initial_model: Optional[str], 
-    initial_max_tokens: int, 
-    initial_debug: bool,
-    initial_temperature: float,
-    initial_system_prompt: Optional[str] = None,
-    initial_rules_prompt: Optional[str] = None, # Ajout pour les règles
-    initial_user_prompt: Optional[str] = None, # Ajout pour le prompt initial
-    autosave_json_path: Optional[str] = None,
-    autosave_md_path: Optional[str] = None,
-    load_session_path: Optional[str] = None,
-    god_mode: bool = False,
-    silent_mode_initial: bool = False,
-    non_interactive_initial: bool = False, # Nouveau
-    stream_enabled_initial: bool = True # Nouveau
-):
-    if not non_interactive_initial:
-        console.print(Panel(Markdown("# Bienvenue au Mini-Chat LLMaaS !"), title="👋", border_style="green"))
-        console.print("Tapez `/help` pour voir les commandes disponibles.")
-
-    current_model = initial_model
-    current_temperature = initial_temperature
-    current_max_tokens = initial_max_tokens
-    
-    # Combinaison du prompt système initial et des règles
-    combined_system_prompt = initial_system_prompt if initial_system_prompt else ""
-    if initial_rules_prompt:
-        if combined_system_prompt:
-            combined_system_prompt += f"\n\n--- Règles Additionnelles ---\n{initial_rules_prompt}"
+    def _complete(self, text: str, state: int):
+        """Fonction d'autocomplétion pour readline."""
+        if text.startswith('/'):
+            # Autocomplétion des commandes
+            matches = [cmd for cmd in self.commands if cmd.startswith(text)]
         else:
-            combined_system_prompt = f"--- Règles Applicables ---\n{initial_rules_prompt}"
-    current_system_prompt = combined_system_prompt if combined_system_prompt else None
-    
-    debug_active = initial_debug
-    silent_mode = silent_mode_initial
-    non_interactive_mode = non_interactive_initial
-    streaming_enabled = stream_enabled_initial
-
-    if non_interactive_mode or initial_user_prompt: # Si non-interactif OU si un prompt initial est fourni
-        streaming_enabled = False # Forcer le non-stream
-
-    messages: List[Dict[str, Any]] = []
-
-    if load_session_path:
-        loaded_session = load_session_from_json(load_session_path)
-        if loaded_session:
-            meta = loaded_session.get("metadata", {})
-            current_model = initial_model if initial_model else meta.get("model", current_model)
-            current_temperature = initial_temperature if initial_temperature != 0.7 else meta.get("temperature", current_temperature)
-            current_max_tokens = initial_max_tokens if initial_max_tokens != 1024 else meta.get("max_tokens", current_max_tokens)
-            current_system_prompt = initial_system_prompt if initial_system_prompt is not None else meta.get("system_prompt", current_system_prompt)
-            debug_active = initial_debug if initial_debug != False else meta.get("debug", debug_active) # False est le défaut Click
-            messages = loaded_session.get("history", [])
-            console.print(f"[green]Session chargée depuis '{load_session_path}'[/green]")
-        else:
-            console.print(f"[red]Échec du chargement de '{load_session_path}'. Démarrage d'une nouvelle session.[/red]")
-    
-    if not messages and current_system_prompt:
-        messages = [{"role": "system", "content": current_system_prompt}]
-    
-    available_models = await get_available_models(api_url_param, api_key_param)
-    
-    if silent_mode:
-        if not current_model: # Si --model n'a pas été fourni, current_model est None (car DEFAULT_MODEL est appliqué dans main)
-            console.print("[bold red]Mode silencieux : Aucun modèle spécifié via --model ou DEFAULT_MODEL dans .env, ou modèle invalide. Arrêt.[/bold red]")
-            return
-        if available_models and current_model not in available_models:
-            console.print(f"[bold red]Mode silencieux : Modèle '{current_model}' non trouvé dans la liste des modèles disponibles. Arrêt.[/bold red]")
-            return
-        if not available_models and current_model: # On fait confiance au modèle fourni si la liste n'est pas récupérable
-            pass # On continue avec le current_model
-        elif not available_models and not current_model: # Devrait être impossible si la logique ci-dessus est correcte
-             console.print("[bold red]Mode silencieux : Aucun modèle disponible et aucun modèle spécifié. Arrêt.[/bold red]"); return
-
-    else: # Mode non silencieux, logique interactive existante
-        if not available_models and not current_model:
-            console.print("[bold red]Aucun modèle disponible ou défini. Arrêt.[/bold red]"); return
+            # Pas d'autocomplétion pour le texte normal
+            matches = []
         
-        if not current_model and available_models:
-            current_model = select_model_interactive(available_models, None)
-            if not current_model: console.print("[bold red]Aucun modèle sélectionné. Arrêt.[/bold red]"); return
-        elif current_model and available_models and current_model not in available_models:
-            console.print(f"[yellow]Modèle '{current_model}' non listé. Choix manuel.[/yellow]")
-            new_selected_model = select_model_interactive(available_models, current_model)
-            if not new_selected_model: console.print("[bold red]Aucun modèle sélectionné. Arrêt.[/bold red]"); return
-            current_model = new_selected_model
-        elif not available_models and current_model:
-             console.print(f"[yellow]Liste des modèles indisponible. Utilisation de '{current_model}'.[/yellow]")
-
-    if not silent_mode:
-        console.print(f"Modèle: [cyan]{current_model}[/cyan] | Temp: {current_temperature:.1f} | MaxTokens: {current_max_tokens} | Debug: {'On' if debug_active else 'Off'}")
-        if current_system_prompt: console.print(f"Prompt Système: [italic yellow]'{current_system_prompt}'[/italic yellow]")
-
-    # Gérer le prompt initial s'il est fourni
-    first_turn = True
-    if initial_user_prompt:
-        messages.append({"role": "user", "content": initial_user_prompt})
-        if not silent_mode: # N'affiche le prompt initial que si on n'est pas en mode silencieux
-            console.print(f"\n[bold green]Vous (via --prompt):[/bold green] {initial_user_prompt}")
-        # On ne met pas le `user_input` à `initial_user_prompt` pour ne pas le traiter comme une commande
-    
-    while True:
         try:
-            if initial_user_prompt and first_turn:
-                # Le premier tour a déjà été géré par le prompt initial
-                user_input = "" # Pour sauter la demande de Prompt.ask et aller directement à la logique API
-                first_turn = False
+            return matches[state]
+        except IndexError:
+            return None
+    
+    def input_with_completion(self, prompt: str) -> str:
+        """
+        Demande une entrée utilisateur avec autocomplétion et historique.
+        
+        Args:
+            prompt: Le prompt à afficher
+            
+        Returns:
+            L'entrée utilisateur
+        """
+        try:
+            user_input = input(prompt)
+            
+            # Ajouter à l'historique seulement si ce n'est pas vide
+            if user_input.strip():
+                readline.add_history(user_input)
+                
+                # Sauvegarder l'historique
+                history_file = os.path.expanduser("~/.minichat_history")
+                try:
+                    readline.write_history_file(history_file)
+                except:
+                    pass  # Ignorer les erreurs de sauvegarde
+            
+            return user_input
+        except (ImportError, AttributeError):
+            # Fallback si readline n'est pas disponible
+            return input(prompt)
+
+class ChatClient:
+    """
+    Classe encapsulant la logique et l'état du client de chat interactif.
+    """
+    def __init__(self, **kwargs):
+        """
+        Initialise le client de chat avec les paramètres fournis.
+        """
+        # Initialisation des paramètres depuis les kwargs
+        self.api_url = kwargs.get('api_url_param')
+        self.api_key = kwargs.get('api_key_param')
+        self.current_model = kwargs.get('initial_model')
+        self.current_max_tokens = kwargs.get('initial_max_tokens')
+        self.current_temperature = kwargs.get('initial_temperature')
+        self.debug_active = kwargs.get('initial_debug')
+        self.god_mode = kwargs.get('god_mode')
+        self.silent_mode = kwargs.get('silent_mode_initial')
+        self.non_interactive_mode = kwargs.get('non_interactive_initial', False)
+        self.streaming_enabled = kwargs.get('stream_enabled_initial', True)
+        self.embedding_model = kwargs.get('embedding_model')
+        
+        self.autosave_json_path = kwargs.get('autosave_json_path')
+        self.autosave_md_path = kwargs.get('autosave_md_path')
+        self.load_session_path = kwargs.get('load_session_path')
+        self.initial_user_prompt = kwargs.get('initial_user_prompt')
+
+        # Combinaison des prompts système et des règles
+        initial_system_prompt = kwargs.get('initial_system_prompt', "")
+        initial_rules_prompt = kwargs.get('initial_rules_prompt')
+        combined_system_prompt = initial_system_prompt
+        if initial_rules_prompt:
+            if combined_system_prompt:
+                combined_system_prompt += f"\n\n--- Règles Additionnelles ---\n{initial_rules_prompt}"
             else:
-                user_input = Prompt.ask("\n[bold green]Vous[/bold green]")
+                combined_system_prompt = f"--- Règles Applicables ---\n{initial_rules_prompt}"
+        self.current_system_prompt = combined_system_prompt if combined_system_prompt else None
 
-            if user_input.lower() in ["/quit", "/exit"]: console.print(Markdown("--- Au revoir ! ---")); break
-            if user_input.lower() == "/help":
-                console.print(Panel(Markdown(
-                    "**Commandes disponibles en cours de chat:**\n\n"
-                    "- `/quit` ou `/exit`: Quitter le chat.\n"
-                    "- `/history`: Afficher l'historique de la conversation actuelle.\n"
-                    "- `/clear`: Effacer l'historique (conserve les paramètres de session comme le prompt système).\n"
-                    "- `/model`: Changer de modèle (réinitialise l'historique, conserve le prompt système).\n"
-                    "- `/system <prompt>`: Définir ou modifier le prompt système (réinitialise l'historique).\n"
-                    "- `/system_clear`: Supprimer le prompt système (réinitialise l'historique).\n"
-                    "- `/save_session <fichier.json>`: Sauvegarder la session actuelle (paramètres et historique).\n"
-                    "- `/load_session <fichier.json>`: Charger une session (écrase la session actuelle).\n"
-                    "- `/savemd <fichier.md>`: Sauvegarder l'historique actuel en Markdown.\n"
-                    "- `/tools`: Lister les outils disponibles et leur description.\n"
-                    "- `/debug`: Activer/désactiver le mode debug pour l'affichage des payloads API.\n"
-                    "- `/silent`: Activer/désactiver le mode silencieux (moins d'output).\n"
-                    "- `/stream`: Activer/désactiver le mode streaming pour la réponse de l'IA.\n"
-                    "- `/smol`: Demander au modèle de condenser l'historique actuel en un prompt efficace.\n"
-                    "- `/help`: Afficher cette aide.\n\n"
-                    "Pour les options de lancement du script, utilisez `python mini_chat.py --help`."
-                ), title=" Aide Mini-Chat ", border_style="blue", expand=False))
-                continue
-            if user_input.lower() == "/smol":
-                if not messages or all(m.get("role") == "system" for m in messages):
-                    console.print("[yellow]Historique vide ou ne contient que des messages système. Rien à condenser.[/yellow]")
-                    continue
+        # Initialisation de l'état du chat
+        self.messages: List[Dict[str, Any]] = []
+        self.available_models: List[str] = []
+        self.is_rag_enabled = False
+        self.vector_size_initialized = False
+        self.rag_similarity_threshold = 0.78  # Seuil par défaut selon les meilleures pratiques
 
-                console.print("[cyan]Demande de condensation du contexte au LLM...[/cyan]")
+        # Initialisation des gestionnaires
+        self.qdrant_manager = QdrantManager(
+            host=kwargs.get('qdrant_url', "localhost"),
+            port=kwargs.get('qdrant_port', 6333),
+            collection_name=kwargs.get('qdrant_collection', "minichat_rag")
+        )
+        self.command_handler = self._setup_command_handler()
+        
+        # Initialiser l'autocomplétion seulement en mode interactif
+        self.completer = None
+        if not self.non_interactive_mode:
+            self.completer = CommandCompleter()
 
-                if not current_model:
-                    console.print("[red]Erreur: Aucun modèle n'est actuellement sélectionné pour la condensation.[/red]")
-                    continue
-                
-                history_to_condense = [msg for msg in messages if msg.get("role") != "system"]
-                history_str = "\n".join([f"{m['role']}: {m.get('content', '') or m.get('tool_calls', '')}" for m in history_to_condense])
-                
-                condensation_prompt_messages = [
-                    {"role": "system", "content": "Tu es un assistant expert en résumé et en formulation de prompts efficaces. Ta tâche est de condenser l'historique de conversation suivant en un unique prompt utilisateur concis. Ce prompt doit préserver l'intention principale de la conversation, la tâche en cours, et toutes les informations cruciales nécessaires pour que je (un autre LLM) puisse continuer la conversation ou achever la tâche sans perdre de contexte. Le résultat doit être SEULEMENT le prompt condensé, sans aucune phrase d'introduction ou de conclusion de ta part."},
-                    {"role": "user", "content": f"Voici l'historique à condenser :\n\n---\n{history_str}\n---\n\nProduis maintenant le prompt utilisateur condensé et efficace."}
-                ]
-                
-                condensed_context, _, _, _ = await stream_chat_completions(
-                    api_url_param, api_key_param, current_model, 
-                    condensation_prompt_messages, 
-                    max_tokens=current_max_tokens, # Utiliser les max_tokens actuels, ou une valeur plus faible si désiré
-                    debug_mode=debug_active, 
-                    temperature=0.1, # Température basse pour une condensation plus factuelle
-                    stream_enabled=False, # Forcer le non-streaming pour cette opération
-                    silent_mode=True # Exécuter silencieusement cette requête interne
-                )
+    async def run(self):
+        """
+        Lance la boucle principale du chat.
+        """
+        if not self.api_url or not self.api_key:
+            console.print("[bold red]Erreur: URL de l'API ou clé API non configurée.[/bold red]")
+            return
 
-                if condensed_context:
-                    messages.clear()
-                    if current_system_prompt:
-                        messages.append({"role": "system", "content": current_system_prompt})
-                    messages.append({"role": "user", "content": condensed_context.strip()})
-                    console.print("[green]Contexte condensé par le LLM et appliqué.[/green]")
-                    console.print(f"[italic]Nouveau contexte utilisateur (condensé) :[/italic]\n{condensed_context.strip()}")
+        if not self.non_interactive_mode:
+            console.print(Panel(Markdown("# Bienvenue au Mini-Chat LLMaaS !"), title="👋", border_style="green"))
+            console.print("Tapez `/help` pour voir les commandes disponibles.")
+
+        # Initialisation du RAG
+        if self.embedding_model and self.qdrant_manager.client and self.qdrant_manager.check_collection_exists():
+            self.is_rag_enabled = True
+            console.print("[bold green]Mode RAG activé automatiquement (connexion Qdrant OK et collection trouvée).[/bold green]")
+        elif self.embedding_model:
+            console.print("[yellow]Mode RAG désactivé. Pour l'activer, utilisez `/embed` pour créer la collection ou `/rag on` si elle existe déjà.[/yellow]")
+
+        if self.non_interactive_mode or self.initial_user_prompt:
+            self.streaming_enabled = False
+
+        self.available_models = await get_available_models(self.api_url, self.api_key)
+        
+        if self.load_session_path:
+            if not await self.command_handler.handle_command(f"/load_session {self.load_session_path}"):
+                console.print(f"[red]Échec du chargement de '{self.load_session_path}'. Démarrage d'une nouvelle session.[/red]")
+        
+        if not self.messages and self.current_system_prompt:
+            self.messages = [{"role": "system", "content": self.current_system_prompt}]
+        
+        if not self.silent_mode:
+            await self._select_initial_model()
+            self._display_initial_status()
+
+        first_turn = True
+        if self.initial_user_prompt:
+            self.messages.append({"role": "user", "content": self.initial_user_prompt})
+            if not self.silent_mode:
+                console.print(f"\n[bold green]Vous (via --prompt):[/bold green] {self.initial_user_prompt}")
+        
+        await self._chat_loop_internal(first_turn)
+        
+        self._autosave_session()
+
+    def _setup_command_handler(self) -> CommandHandler:
+        """
+        Initialise et retourne le CommandHandler avec une référence au client.
+        
+        Returns:
+            CommandHandler: L'instance du gestionnaire de commandes.
+        """
+        self.command_handler = CommandHandler(self)
+        return self.command_handler
+
+    async def _select_initial_model(self):
+        """
+        Gère la sélection interactive du modèle au démarrage si aucun n'est
+        défini ou si le modèle défini n'est pas valide.
+        """
+        if not self.current_model and self.available_models:
+            self.current_model = select_model_interactive(self.available_models, None)
+            if not self.current_model:
+                console.print("[bold red]Aucun modèle sélectionné. Arrêt.[/bold red]")
+                return
+        elif self.current_model and self.available_models and self.current_model not in self.available_models:
+            console.print(f"[yellow]Modèle '{self.current_model}' non listé. Choix manuel.[/yellow]")
+            new_model = select_model_interactive(self.available_models, self.current_model)
+            if not new_model:
+                console.print("[bold red]Aucun modèle sélectionné. Arrêt.[/bold red]")
+                return
+            self.current_model = new_model
+        elif not self.available_models and not self.current_model:
+            console.print("[bold red]Aucun modèle disponible ou défini. Arrêt.[/bold red]")
+            return
+        elif not self.available_models and self.current_model:
+            console.print(f"[yellow]Liste des modèles indisponible. Utilisation de '{self.current_model}'.[/yellow]")
+
+    def _display_initial_status(self):
+        """
+        Affiche l'état initial de la configuration du chat (modèle,
+        température, etc.) dans la console.
+        """
+        console.print(f"Modèle: [cyan]{self.current_model}[/cyan] | Temp: {self.current_temperature:.1f} | MaxTokens: {self.current_max_tokens} | Debug: {'On' if self.debug_active else 'Off'}")
+        if self.current_system_prompt:
+            console.print(f"Prompt Système: [italic yellow]'{self.current_system_prompt}'[/italic yellow]")
+
+    async def _chat_loop_internal(self, first_turn: bool):
+        """
+        La boucle interne qui gère les tours de conversation, de l'entrée
+        utilisateur à la réponse du modèle.
+
+        Args:
+            first_turn (bool): Indique si c'est le premier tour de la boucle
+                               (utile pour le mode non interactif).
+        """
+        while True:
+            try:
+                if self.initial_user_prompt and first_turn:
+                    user_input = ""
+                    first_turn = False
                 else:
-                    console.print("[red]Échec de la condensation du contexte par le LLM.[/red]")
-                continue
-            if user_input.lower() == "/stream":
-                streaming_enabled = not streaming_enabled
-                console.print(f"Mode streaming {'[bold green]activé[/bold green]' if streaming_enabled else '[bold red]désactivé[/bold red]'}.")
-                continue
-            if user_input.lower() == "/tools":
-                if not silent_mode:
-                    console.print("\n[bold blue]Outils disponibles:[/bold blue]")
-                    if TOOLS_AVAILABLE:
-                        for tool_spec in TOOLS_AVAILABLE:
-                            f_def = tool_spec.get("function",{})
-                            console.print(f"- [cyan]{f_def.get('name','N/A')}[/cyan]: {f_def.get('description','N/A')}")
-                    else: console.print("[yellow]Aucun outil configuré.[/yellow]")
-                else:
-                    console.print("[italic dim]Mode silencieux actif. Commande /tools ignorée pour l'affichage.[/italic dim]")
-                continue
-            if user_input.lower() == "/silent":
-                silent_mode = not silent_mode
-                console.print(f"Mode silencieux {'[bold green]activé[/bold green]' if silent_mode else '[bold red]désactivé[/bold red]'}."); continue
-            if user_input.lower().startswith("/system "):
-                new_prompt = user_input[len("/system "):].strip()
-                current_system_prompt = new_prompt if new_prompt else current_system_prompt
-                messages = [{"role": "system", "content": current_system_prompt}] if current_system_prompt else []
-                console.print(f"Prompt système {'mis à jour' if new_prompt else 'conservé'}. Historique réinitialisé."); continue
-            if user_input.lower() == "/system_clear":
-                current_system_prompt = None; messages = []
-                console.print("Prompt système supprimé. Historique réinitialisé."); continue
-            if user_input.lower().startswith("/save_session "):
-                filename = user_input[len("/save_session "):].strip()
-                if filename:
-                    session_data = {"metadata": {"model": current_model, "temperature": current_temperature, 
-                                                 "max_tokens": current_max_tokens, "system_prompt": current_system_prompt,
-                                                 "api_url": api_url_param, "debug": debug_active}, 
-                                    "history": messages}
-                    save_session_json(session_data, filename)
-                else: console.print("[yellow]Nom de fichier manquant.[/yellow]")
-                continue
-            if user_input.lower().startswith("/load_session "):
-                filename = user_input[len("/load_session "):].strip()
-                if filename:
-                    loaded_s = load_session_from_json(filename)
-                    if loaded_s:
-                        meta = loaded_s.get("metadata",{})
-                        current_model = meta.get("model",current_model)
-                        current_temperature = meta.get("temperature",current_temperature)
-                        current_max_tokens = meta.get("max_tokens",current_max_tokens)
-                        current_system_prompt = meta.get("system_prompt",current_system_prompt)
-                        debug_active = meta.get("debug", debug_active) 
-                        messages = loaded_s.get("history",[])
-                        console.print(f"[green]Session chargée depuis '{filename}'.[/green]")
-                        console.print(f"Modèle: [cyan]{current_model}[/cyan] | Temp: {current_temperature:.1f} | MaxTokens: {current_max_tokens} | Debug: {'On' if debug_active else 'Off'}")
-                        if current_system_prompt: console.print(f"Prompt Système: [italic yellow]'{current_system_prompt}'[/italic yellow]")
-                        else: console.print(f"Prompt Système: [italic]Aucun[/italic]")
-                else: console.print("[yellow]Nom de fichier manquant.[/yellow]")
-                continue
-            if user_input.lower().startswith("/savemd "):
-                filename = user_input[len("/savemd "):].strip()
-                if filename: 
-                    md_meta = {"model": current_model, "temperature": current_temperature, 
-                               "max_tokens": current_max_tokens, "system_prompt": current_system_prompt,
-                               "api_url": api_url_param, "debug": debug_active}
-                    save_chat_markdown(messages, filename, md_meta)
-                else: console.print("[yellow]Nom de fichier manquant.[/yellow]")
-                continue
-            if user_input.lower() == "/debug":
-                debug_active = not debug_active
-                console.print(f"Mode debug {'[bold green]activé[/bold green]' if debug_active else '[bold red]désactivé[/bold red]'}."); continue
-            if user_input.lower() == "/history":
-                if not messages: console.print("[yellow]Historique vide.[/yellow]"); continue
-                console.print(Panel(Markdown("### Historique"), title="📜",border_style="blue"))
-                for msg in messages:
-                    role = msg.get('role','?').capitalize(); style = "green" if role=="User" else "magenta" if role=="Assistant" else "yellow"
-                    console.print(f"[bold {style}]{role}:[/bold {style}] {msg.get('content') or msg.get('tool_calls','')}")
-                continue
-            if user_input.lower() == "/clear":
-                messages = [{"role": "system", "content": current_system_prompt}] if current_system_prompt else []
-                console.print("[yellow]Historique effacé.[/yellow]"); continue
-            if user_input.lower() == "/model":
-                if silent_mode:
-                    console.print("[italic dim]Mode silencieux actif. Commande /model ignorée.[/italic dim]")
-                elif not available_models: 
-                    available_models = await get_available_models(api_url_param, api_key_param)
-                    if available_models:
-                        new_model = select_model_interactive(available_models, current_model)
-                        if new_model and new_model != current_model:
-                            current_model = new_model; messages = [{"role": "system", "content": current_system_prompt}] if current_system_prompt else []
-                            console.print(f"Modèle: [cyan]{current_model}[/cyan]. Historique réinitialisé.")
+                    # Utiliser l'autocomplétion si disponible, sinon fallback sur Prompt.ask
+                    if self.completer:
+                        # Utiliser un prompt simple sans Rich pour éviter les conflits d'affichage
+                        print("\n\033[1;32mVous\033[0m: ", end="", flush=True)
+                        user_input = self.completer.input_with_completion("")
                     else:
-                        console.print("[yellow]Liste des modèles indisponible.[/yellow]")
-                elif available_models : # available_models existe déjà
-                    new_model = select_model_interactive(available_models, current_model)
-                    if new_model and new_model != current_model:
-                        current_model = new_model; messages = [{"role": "system", "content": current_system_prompt}] if current_system_prompt else []
-                        if not silent_mode: console.print(f"Modèle: [cyan]{current_model}[/cyan]. Historique réinitialisé.")
-                continue
-            
-            # Si user_input est vide ET qu'on n'est pas au premier tour avec un prompt initial,
-            # on ne fait rien et on redemande une entrée.
-            if not user_input and not (initial_user_prompt and first_turn):
-                continue
+                        user_input = Prompt.ask("\n[bold green]Vous[/bold green]")
 
-            # Si user_input est vide, c'est qu'on vient du --prompt initial (géré par first_turn=False plus haut),
-            # on ne l'ajoute pas à nouveau. Sinon, on l'ajoute.
-            if user_input:
-                messages.append({"role": "user", "content": user_input})
-            
-            # Boucle de traitement des appels d'outils et de la réponse de l'assistant
-            # S'exécute au moins une fois si on a un prompt initial, ou si user_input n'est pas vide.
-            while True:
-                if not current_model: console.print("[red]Erreur: Modèle non sélectionné.[/red]"); break
-                
-                # S'assurer qu'il y a au moins un message utilisateur si on n'a pas de message système
-                # ou si le dernier message n'est pas de l'assistant (pour éviter double appel API sans user input)
-                if not messages or (messages[-1]["role"] == "assistant" and not tool_calls_received): # tool_calls_received serait d'un tour précédent
-                    if not any(m["role"] == "user" for m in messages): # Vérifie s'il y a un message utilisateur dans l'historique
-                         # Ce cas ne devrait plus arriver avec la vérification `if not user_input and not (initial_user_prompt and first_turn):`
-                        console.print("[yellow]Veuillez entrer un message.[/yellow]")
-                        break # Sort de la boucle interne pour redemander une entrée utilisateur
+                # Traiter les commandes en priorité
+                if user_input.startswith("/"):
+                    if await self.command_handler.handle_command(user_input):
+                        if user_input.lower() in ["/quit", "/exit"]:
+                            break
+                        continue
 
-                response_content, usage, tool_calls_received, backend = await stream_chat_completions(
-                    api_url_param, api_key_param, current_model, messages, current_max_tokens, debug_active, current_temperature, streaming_enabled
-                )
+                # Si pas d'input et pas de prompt initial, continuer
+                if not user_input and not (self.initial_user_prompt and first_turn):
+                    continue
 
-                # Construction de assistant_message pour clarifier les types pour Pylance
-                # et s'assurer que les arguments des tool_calls sont des chaînes JSON pour l'historique
-                processed_tool_calls_for_history = []
-                if tool_calls_received:
-                    for tc_received in tool_calls_received:
-                        processed_tc = tc_received.copy() # Évite de modifier l'original si c'est un objet partagé
-                        if "function" in processed_tc and "arguments" in processed_tc["function"]:
-                            args_val = processed_tc["function"]["arguments"]
-                            if isinstance(args_val, dict):
-                                processed_tc["function"]["arguments"] = json.dumps(args_val)
-                            elif isinstance(args_val, str) and not args_val.strip(): # Si c'est une chaîne vide
-                                processed_tc["function"]["arguments"] = "{}"
-                            # Si c'est déjà une chaîne JSON non vide, on ne touche pas
-                        processed_tool_calls_for_history.append(processed_tc)
+                # Ajouter le message à l'historique seulement si ce n'est pas une commande
+                if user_input:
+                    self.messages.append({"role": "user", "content": user_input})
 
-                if processed_tool_calls_for_history:
-                    assistant_message: Dict[str, Any] = {
-                        "role": "assistant",
-                        "content": response_content or "", # Peut être None ou vide si seulement des tool_calls
-                        "tool_calls": processed_tool_calls_for_history
-                    }
-                else:
-                    assistant_message: Dict[str, Any] = {
-                        "role": "assistant",
-                        "content": response_content or ""
-                    }
-                messages.append(assistant_message)
-                
-                if tool_calls_received:
-                    for tool_call in tool_calls_received:
-                        if not silent_mode: display_tool_call_request(tool_call)
-                        func_name = tool_call.get("function", {}).get("name")
-                        func_args_str = tool_call.get("function", {}).get("arguments", "{}")
-                        tool_call_id_str = tool_call.get("id", "N/A")
-                        if func_name in TOOL_FUNCTIONS_MAP:
-                            try:
-                                if isinstance(func_args_str, str):
-                                    if not func_args_str.strip(): # Si la chaîne est vide ou ne contient que des espaces
-                                        func_args = {}
-                                    else:
-                                        func_args = json.loads(func_args_str)
-                                elif isinstance(func_args_str, dict):
-                                    func_args = func_args_str # C'est déjà un dictionnaire
-                                else:
-                                    # Pourrait être None ou un autre type non attendu si l'API change
-                                    console.print(f"[yellow]Avertissement: type d'arguments non standard reçu: {type(func_args_str)}. Tentative avec des arguments vides.[/yellow]")
-                                    func_args = {}
-                                
-                                func_to_call = TOOL_FUNCTIONS_MAP[func_name]
-                                tool_kwargs = func_args.copy()
-                                # Passer les arguments supplémentaires nécessaires à certains outils
-                                tool_kwargs['god_mode'] = god_mode # Toujours passer god_mode
-                                if func_name == "execute_shell_command":
-                                    tool_kwargs['console_instance'] = console
-                                # Potentiellement d'autres outils pourraient avoir besoin de 'console_instance' ou d'autres paramètres globaux
-                                # Retrait du console.status pour le test
-                                # with console.status(f"[yellow]Outil {func_name}...[/yellow]", spinner="earth"):
-                                #     await asyncio.sleep(0.5); tool_result = func_to_call(**tool_kwargs)
-                                console.print(f"[yellow]Outil {func_name}...[/yellow]") # Affichage simple
-                                await asyncio.sleep(0.5) # Garder un petit délai pour simuler le traitement
-                                tool_result = func_to_call(**tool_kwargs)
-                                if not silent_mode: display_tool_call_response(tool_call_id_str, func_name, tool_result)
-                                messages.append({"tool_call_id": tool_call_id_str, "role": "tool", "content": str(tool_result)})
-                            except Exception as e:
-                                error_msg = f"Erreur outil {func_name}: {e}"; console.print(f"[red]{error_msg}[/red]")
-                                messages.append({"tool_call_id": tool_call_id_str, "role": "tool", "content": str(error_msg)})
-                        else:
-                            error_msg = f"Outil inconnu: {func_name}"; console.print(f"[red]{error_msg}[/red]")
-                            messages.append({"tool_call_id": tool_call_id_str, "role": "tool", "content": str(error_msg)})
-                    # Après avoir traité les appels d'outils, on relance la boucle pour obtenir une réponse finale de l'assistant
-                    continue 
-                
-                # Si pas d'appel d'outil, on affiche les stats et on sort de la boucle interne
-                if not silent_mode: display_stats(usage, backend)
-                
-                if non_interactive_mode: # Si mode non interactif, on termine après la première réponse complète.
-                    if not silent_mode: # N'affiche ce message que si on n'est pas en mode silencieux
+                # Traiter la réponse (soit user_input soit initial_user_prompt)
+                input_to_process = user_input if user_input else self.initial_user_prompt
+                if input_to_process:
+                    await self._process_and_respond(input_to_process)
+
+                if self.non_interactive_mode:
+                    if not self.silent_mode:
                         console.print(Markdown("--- Fin du mode non interactif ---"))
-                    break # Sort de la boucle while True interne (traitement API)
-                
-                break # Sort de la boucle while True interne (traitement API)
-        
-        except KeyboardInterrupt: console.print(Markdown("\n--- Chat interrompu ---")); break
-        except Exception as e: console.print(f"[bold red]Erreur boucle de chat: {e}[/bold red]"); break
-        
-        # Si on est en mode non interactif, on sort de la boucle principale après le premier tour complet.
-        if non_interactive_mode:
-            break
+                    break
             
-    # Sauvegarde automatique à la fin de la session
-    if autosave_json_path or autosave_md_path:
-        session_metadata_to_save = {
-            "model": current_model, 
-            "temperature": current_temperature, 
-            "max_tokens": current_max_tokens,
-            "system_prompt": current_system_prompt,
-            "api_url": api_url_param, 
-            "debug": debug_active
+            except KeyboardInterrupt:
+                console.print(Markdown("\n--- Chat interrompu ---"))
+                break
+            except Exception as e:
+                console.print(f"[bold red]Erreur boucle de chat: {e}[/bold red]")
+                break
+            
+            if self.non_interactive_mode:
+                break
+
+    async def _process_and_respond(self, user_input: str):
+        """
+        Orchestre un seul tour de conversation : préparation des messages
+        (avec RAG), appel à l'API, et gestion de la réponse (texte ou outils).
+
+        Args:
+            user_input (str): Le message entré par l'utilisateur.
+        """
+        # La préparation des messages (et donc l'injection RAG) est faite ici.
+        messages_for_api = await self._prepare_messages_for_api(user_input)
+
+        while True:
+            if not self.current_model:
+                console.print("[red]Erreur: Modèle non sélectionné.[/red]")
+                break
+            
+            response_content, usage, tool_calls, backend = await stream_chat_completions(
+                self.api_url or "",
+                self.api_key or "",
+                self.current_model or "",
+                messages_for_api,
+                self.current_max_tokens or 1024,
+                self.debug_active or False,
+                self.current_temperature or 0.7,
+                self.streaming_enabled
+            )
+
+            self._add_assistant_message_to_history(response_content, tool_calls)
+
+            if tool_calls:
+                await self._handle_tool_calls(tool_calls, messages_for_api)
+                continue  # Continue la boucle pour renvoyer les résultats des outils au modèle
+
+            if not self.silent_mode:
+                display_stats(usage, backend)
+            
+            break # Sort de la boucle d'appel d'outils
+
+    async def _prepare_messages_for_api(self, user_input: str) -> List[Dict[str, Any]]:
+        """
+        Prépare la liste des messages à envoyer à l'API.
+        Ajoute le contexte RAG au prompt système si le mode RAG est activé.
+        Cette fonction ne modifie plus self.messages directement, mais retourne une nouvelle liste.
+
+        Args:
+            user_input (str): Le dernier message de l'utilisateur.
+
+        Returns:
+            List[Dict[str, Any]]: La liste des messages prête pour l'API.
+        """
+        # Partir d'une copie propre de l'historique pour cette préparation
+        messages_for_api = [msg for msg in self.messages if msg.get("role") != "system"]
+        
+        # Récupérer le prompt système de base (sans RAG)
+        base_system_prompt = self.current_system_prompt or ""
+        
+        if self.is_rag_enabled and user_input:
+            if not self.embedding_model:
+                console.print("[bold red]Erreur RAG: Aucun modèle d'embedding n'est configuré. Désactivation du RAG.[/bold red]")
+                self.is_rag_enabled = False
+            else:
+                # Effectuer la recherche RAG avec filtrage par score de similarité
+                if not self.silent_mode:
+                    console.print("[cyan]Recherche RAG en cours...[/cyan]")
+                context_str = await self._get_rag_context(user_input)
+                if context_str:
+                    # Remplacer le message utilisateur par un prompt RAG structuré
+                    rag_prompt = (
+                        "En te basant exclusivement sur le contexte suivant, réponds à la question ci-dessous.\n\n"
+                        "--- CONTEXTE ---\n"
+                        f"{context_str}\n"
+                        "--- FIN DU CONTEXTE ---\n\n"
+                        f"Question: {user_input}"
+                    )
+                    # Modifier le dernier message (la question de l'utilisateur)
+                    if messages_for_api and messages_for_api[-1]["role"] == "user":
+                        messages_for_api[-1]["content"] = rag_prompt
+                    
+                    if not self.silent_mode:
+                        context_panel = Panel(Markdown(context_str), title="🧠 Contexte RAG trouvé", border_style="magenta", expand=False)
+                        console.print(context_panel)
+                else:
+                    if not self.silent_mode:
+                        console.print("[yellow]Aucun contexte pertinent trouvé dans la base de données vectorielle.[/yellow]")
+
+        # S'assurer qu'il y a un prompt système s'il est défini
+        if base_system_prompt and (not messages_for_api or messages_for_api[0].get("role") != "system"):
+             messages_for_api.insert(0, {"role": "system", "content": base_system_prompt})
+
+        return messages_for_api
+
+    async def _get_rag_context(self, user_input: str) -> Optional[str]:
+        """
+        Effectue la recherche vectorielle dans Qdrant et retourne le contexte
+        formaté pour être injecté dans le prompt.
+        Utilise un seuil de similarité pour filtrer les résultats non pertinents.
+
+        Args:
+            user_input (str): Le message de l'utilisateur à utiliser pour la recherche.
+
+        Returns:
+            Optional[str]: Le contexte formaté, ou None si aucun résultat pertinent n'est trouvé.
+        """
+        if not self.api_url or not self.api_key or not self.embedding_model:
+            return None
+        query_vector_list = await get_embeddings(self.api_url, self.api_key, [user_input], self.embedding_model)
+        if not query_vector_list:
+            return None
+        
+        query_vector = query_vector_list[0]
+        search_results = self.qdrant_manager.search(vector=query_vector, limit=5) if self.qdrant_manager.client else []
+        
+        if not search_results:
+            return None
+        
+        # Utiliser le seuil de similarité configurable
+        similarity_threshold = self.rag_similarity_threshold
+        
+        # Filtrer les résultats selon le seuil de similarité
+        relevant_results = [hit for hit in search_results if hit.get('score', 0) >= similarity_threshold]
+        
+        if not relevant_results:
+            if not self.silent_mode:
+                max_score = max(hit.get('score', 0) for hit in search_results) if search_results else 0
+                console.print(f"[yellow]Aucun résultat suffisamment pertinent (meilleur score: {max_score:.3f}, seuil: {similarity_threshold})[/yellow]")
+            return None
+        
+        # Afficher les scores pour information/debug
+        if not self.silent_mode:
+            scores_info = ", ".join([f"{hit.get('score', 0):.3f}" for hit in relevant_results])
+            console.print(f"[green]Résultats pertinents trouvés (scores: {scores_info}, seuil: {similarity_threshold})[/green]")
+            
+        return "\n\n---\n\n".join([
+            f"Source: {hit['payload']['source']} (score: {hit.get('score', 0):.3f})\n\n{hit['payload']['text']}" 
+            for hit in relevant_results
+        ])
+
+    def _add_assistant_message_to_history(self, response_content: Optional[str], tool_calls: Optional[List[Dict]]):
+        """
+        Formate et ajoute la réponse de l'assistant (texte et/ou appels d'outils)
+        à l'historique de la conversation.
+
+        Args:
+            response_content (Optional[str]): Le contenu textuel de la réponse.
+            tool_calls (Optional[List[Dict]]): La liste des appels d'outils.
+        """
+        processed_tool_calls = []
+        if tool_calls:
+            for tc in tool_calls:
+                processed_tc = tc.copy()
+                if "function" in processed_tc and "arguments" in processed_tc["function"]:
+                    args_val = processed_tc["function"]["arguments"]
+                    if isinstance(args_val, dict):
+                        processed_tc["function"]["arguments"] = json.dumps(args_val)
+                    elif isinstance(args_val, str) and not args_val.strip():
+                        processed_tc["function"]["arguments"] = "{}"
+                processed_tool_calls.append(processed_tc)
+
+        assistant_message: Dict[str, Any] = {"role": "assistant"}
+        assistant_message["content"] = clean_thinking_content(response_content or "")
+        if processed_tool_calls:
+            assistant_message["tool_calls"] = processed_tool_calls
+        
+        self.messages.append(assistant_message)
+
+    async def _handle_tool_calls(self, tool_calls: List[Dict], messages_for_api: List[Dict]):
+        """
+        Gère l'exécution des appels d'outils demandés par le modèle,
+        appelle les fonctions correspondantes et ajoute les résultats à l'historique.
+
+        Args:
+            tool_calls (List[Dict]): La liste des appels d'outils reçus de l'API.
+            messages_for_api (List[Dict]): La liste des messages à laquelle ajouter
+                                           les réponses des outils.
+        """
+        for tool_call in tool_calls:
+            if not self.silent_mode:
+                display_tool_call_request(tool_call)
+            
+            func_name = tool_call.get("function", {}).get("name")
+            func_args_raw = tool_call.get("function", {}).get("arguments", "{}")
+            tool_call_id = tool_call.get("id", "N/A")
+
+            if func_name in TOOL_FUNCTIONS_MAP:
+                try:
+                    # Gérer le cas où arguments est déjà un dict ou une string JSON
+                    if isinstance(func_args_raw, dict):
+                        func_args = func_args_raw
+                    elif isinstance(func_args_raw, str) and func_args_raw.strip():
+                        func_args = json.loads(func_args_raw)
+                    else:
+                        func_args = {}
+                    
+                    func_to_call = TOOL_FUNCTIONS_MAP[func_name]
+                    if not func_to_call:
+                        raise ValueError(f"Fonction pour '{func_name}' non implémentée.")
+
+                    tool_kwargs = {
+                        **func_args,
+                        'god_mode': self.god_mode,
+                        'console_instance': console,
+                        'qdrant_manager': self.qdrant_manager,
+                        'embedding_model': self.embedding_model,
+                        'api_url': self.api_url or "",
+                        'api_key': self.api_key or "",
+                    }
+                    
+                    console.print(f"[yellow]Outil {func_name}...[/yellow]")
+                    
+                    tool_result = await func_to_call(**tool_kwargs) if asyncio.iscoroutinefunction(func_to_call) else func_to_call(**tool_kwargs)
+                    
+                    if not self.silent_mode:
+                        display_tool_call_response(tool_call_id, func_name, tool_result)
+                    
+                    # Convertir le résultat en chaîne de caractères de manière sûre
+                    if isinstance(tool_result, dict):
+                        tool_content = json.dumps(tool_result, ensure_ascii=False, indent=2)
+                    elif isinstance(tool_result, (list, tuple)):
+                        tool_content = json.dumps(tool_result, ensure_ascii=False, indent=2)
+                    else:
+                        tool_content = str(tool_result)
+                    
+                    tool_response_message = {"tool_call_id": tool_call_id, "role": "tool", "content": tool_content}
+                except Exception as e:
+                    error_msg = f"Erreur outil {func_name}: {e}"
+                    console.print(f"[red]{error_msg}[/red]")
+                    tool_response_message = {"tool_call_id": tool_call_id, "role": "tool", "content": error_msg}
+            else:
+                error_msg = f"Outil inconnu: {func_name}"
+                console.print(f"[red]{error_msg}[/red]")
+                tool_response_message = {"tool_call_id": tool_call_id, "role": "tool", "content": error_msg}
+
+            self.messages.append(tool_response_message)
+            messages_for_api.append(tool_response_message)
+
+    def _autosave_session(self):
+        """
+        Sauvegarde la session en cours (métadonnées et historique) dans un
+        fichier JSON et/ou Markdown si les chemins sont configurés.
+        """
+        if not self.autosave_json_path and not self.autosave_md_path:
+            return
+
+        session_metadata = {
+            "model": self.current_model, 
+            "temperature": self.current_temperature, 
+            "max_tokens": self.current_max_tokens,
+            "system_prompt": self.current_system_prompt,
+            "api_url": self.api_url, 
+            "debug": self.debug_active
         }
         
-        if autosave_json_path:
-            session_data_for_json = {
-                "metadata": session_metadata_to_save,
-                "history": messages
-            }
-            save_session_json(session_data_for_json, autosave_json_path)
+        if self.autosave_json_path:
+            session_data = {"metadata": session_metadata, "history": self.messages}
+            save_session_json(session_data, self.autosave_json_path)
         
-        if autosave_md_path:
-            save_chat_markdown(messages, autosave_md_path, session_metadata_to_save)
+        if self.autosave_md_path:
+            save_chat_markdown(self.messages, self.autosave_md_path, session_metadata)
 
-# --- Point d'entrée CLI ---
 @click.command()
 @click.option('--model', 'cli_model', default=None, help="Modèle à utiliser (ex: gemma3:4b).")
-@click.option('--max-tokens', 'cli_max_tokens', default=1024, type=int, help="Max tokens pour réponse (défaut: 1024).")
+@click.option('--max-tokens', 'cli_max_tokens', default=int(MAX_TOKENS) if MAX_TOKENS else 1024, type=int, help="Max tokens pour réponse (défaut: 1024).")
 @click.option('--temperature', 'cli_temperature', default=0.7, type=float, help="Température (défaut: 0.7).")
 @click.option('--system-prompt', '-sp', 'cli_system_prompt', default=None, help="Prompt système initial.")
 @click.option('--debug/--no-debug', 'cli_debug', default=False, help="Activer/désactiver mode debug API.")
@@ -615,55 +646,69 @@ async def chat_loop(
 @click.option('--prompt', 'cli_initial_user_prompt', default=None, help="Prompt initial à envoyer au LLM.")
 @click.option('--non-interactive', 'cli_non_interactive', is_flag=True, default=False, help="Mode non interactif (termine après la première réponse).")
 @click.option('--no-stream', 'cli_no_stream', is_flag=True, default=False, help="Désactiver le streaming de la réponse.")
-def main(
-    cli_model: Optional[str], cli_max_tokens: int, cli_temperature: float, 
-    cli_debug: bool, 
-    cli_api_url: Optional[str], cli_api_key: Optional[str],
-    cli_system_prompt: Optional[str],
-    cli_autosave_json_path: Optional[str],
-    cli_autosave_md_path: Optional[str],
-    cli_load_session_path: Optional[str],
-    cli_god_mode: bool,
-    cli_silent_mode: bool,
-    cli_rules_path: Optional[str],
-    cli_initial_user_prompt: Optional[str],
-    cli_non_interactive: bool, # Nouveau
-    cli_no_stream: bool # Nouveau
-):
-    """Mini-Chat LLMaaS: Interagissez avec les modèles de langage via l'API."""
+@click.option('--qdrant-url', 'cli_qdrant_url', default=os.getenv("QDRANT_URL", "localhost"), help="URL du serveur Qdrant.")
+@click.option('--qdrant-port', 'cli_qdrant_port', default=int(os.getenv("QDRANT_PORT", 6333)), type=int, help="Port du serveur Qdrant.")
+@click.option('--qdrant-collection', 'cli_qdrant_collection', default=os.getenv("QDRANT_COLLECTION", "minichat_rag"), help="Nom de la collection Qdrant.")
+@click.option('--embedding-model', 'cli_embedding_model', default=os.getenv("EMBEDDING_MODEL"), help="Modèle à utiliser pour l'embedding.")
+def main(**kwargs):
+    """
+    Point d'entrée principal du Mini-Chat LLMaaS.
+    Initialise et exécute le client de chat en fonction des arguments de la ligne de commande.
+    """
     global API_URL, API_KEY, DEFAULT_MODEL 
 
-    if cli_api_url: API_URL = cli_api_url
-    if cli_api_key: API_KEY = cli_api_key
+    # Écraser les configurations globales si des options CLI sont fournies
+    if kwargs.get('cli_api_url'):
+        API_URL = kwargs['cli_api_url']
+    if kwargs.get('cli_api_key'):
+        API_KEY = kwargs['cli_api_key']
     
-    initial_model_to_use = cli_model if cli_model else DEFAULT_MODEL
+    # Déterminer le modèle initial à utiliser
+    initial_model_to_use = kwargs.get('cli_model') or DEFAULT_MODEL
     
+    # Charger le contenu du fichier de règles si spécifié
     rules_prompt_content: Optional[str] = None
-    if cli_rules_path:
+    if kwargs.get('cli_rules_path'):
         try:
-            with open(cli_rules_path, 'r', encoding='utf-8') as f_rules:
+            with open(kwargs['cli_rules_path'], 'r', encoding='utf-8') as f_rules:
                 rules_prompt_content = f_rules.read()
-            if not cli_silent_mode:
-                console.print(f"[info]Règles chargées depuis '{cli_rules_path}'[/info]")
+            if not kwargs.get('cli_silent_mode'):
+                console.print(f"[info]Règles chargées depuis '{kwargs['cli_rules_path']}'[/info]")
         except Exception as e:
-            console.print(f"[red]Erreur lors du chargement du fichier de règles '{cli_rules_path}': {e}[/red]")
+            console.print(f"[red]Erreur lors du chargement du fichier de règles '{kwargs['cli_rules_path']}': {e}[/red]")
 
-
+    # Vérifier la présence de la clé API
     if not API_KEY:
-        console.print("[bold red]Erreur: Clé API (API_KEY) non configurée.[/bold red]"); return
+        console.print("[bold red]Erreur: Clé API (API_KEY) non configurée.[/bold red]")
+        return
 
-    asyncio.run(chat_loop(
-        API_URL, API_KEY, initial_model_to_use, 
-        cli_max_tokens, cli_debug, cli_temperature, 
-        cli_system_prompt,
-        rules_prompt_content, 
-        cli_initial_user_prompt, 
-        cli_autosave_json_path, cli_autosave_md_path, cli_load_session_path,
-        cli_god_mode,
-        cli_silent_mode,
-        cli_non_interactive, # Nouveau
-        not cli_no_stream # Nouveau (inversé car l'option est --no-stream)
-    ))
+    # Préparer les arguments pour le constructeur de ChatClient
+    client_args = {
+        'api_url_param': API_URL,
+        'api_key_param': API_KEY,
+        'initial_model': initial_model_to_use,
+        'initial_max_tokens': kwargs.get('cli_max_tokens'),
+        'initial_debug': kwargs.get('cli_debug'),
+        'initial_temperature': kwargs.get('cli_temperature'),
+        'initial_system_prompt': kwargs.get('cli_system_prompt'),
+        'initial_rules_prompt': rules_prompt_content,
+        'initial_user_prompt': kwargs.get('cli_initial_user_prompt'),
+        'autosave_json_path': kwargs.get('cli_autosave_json_path'),
+        'autosave_md_path': kwargs.get('cli_autosave_md_path'),
+        'load_session_path': kwargs.get('cli_load_session_path'),
+        'god_mode': kwargs.get('cli_god_mode'),
+        'silent_mode_initial': kwargs.get('cli_silent_mode'),
+        'non_interactive_initial': kwargs.get('cli_non_interactive'),
+        'stream_enabled_initial': not kwargs.get('cli_no_stream'),
+        'qdrant_url': kwargs.get('cli_qdrant_url'),
+        'qdrant_port': kwargs.get('cli_qdrant_port'),
+        'qdrant_collection': kwargs.get('cli_qdrant_collection'),
+        'embedding_model': kwargs.get('cli_embedding_model')
+    }
+
+    # Créer et exécuter le client de chat
+    chat_client = ChatClient(**client_args)
+    asyncio.run(chat_client.run())
 
 if __name__ == "__main__":
     main()

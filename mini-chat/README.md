@@ -1,96 +1,368 @@
-# Mini-Chat LLMaaS Cloud Temple
+# Mini-Chat LLMaaS
 
-Ce script Python permet d'interagir avec les modèles de langage de la **plateforme LLMaaS Cloud Temple** via une interface en ligne de commande "jolie et agréable".
+Interface en ligne de commande élégante pour interagir avec les modèles de langage de la plateforme LLMaaS, avec support complet du RAG (Retrieval-Augmented Generation).
 
-📖 **Documentation complète** : [docs.cloud-temple.com](https://docs.cloud-temple.com)
+## 🚀 Démarrage Rapide
 
-## Fonctionnalités
-
-- Choix interactif du modèle.
-- Chat en mode streaming.
-- Support des outils (tools) :
-    - Horloge : Donne l'heure actuelle.
-    - Calculatrice : Évalue des expressions mathématiques.
-    - Lecture de fichier : Lit le contenu d'un fichier local.
-    - Sauvegarde de contenu : Sauvegarde du texte dans un fichier.
-    - Exécution de commande shell : Exécute des commandes shell (avec confirmation).
-- Interface utilisateur améliorée avec la bibliothèque `rich`.
-- Aide intégrée et commande `/tools` pour lister les outils.
-- Option pour définir la taille maximale des tokens de la réponse.
-- Possibilité de définir un **prompt système**.
-- Mode debug pour afficher les payloads API.
-- Affichage des statistiques de la requête (tokens, vitesse).
-- **Sauvegarde et chargement** de sessions de chat (paramètres + historique) en JSON.
-- Sauvegarde de l'historique en Markdown.
-
-## Prérequis
-
-- Python 3.8+
-- Une clé API LLMaaS valide.
-
-## Installation
-
-1.  Clonez ce dépôt (si ce n'est pas déjà fait).
-2.  Naviguez vers le répertoire `exemples/mini-chat/`.
-3.  Créez un environnement virtuel (recommandé) :
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # Sur Linux/macOS
-    # .venv\Scripts\activate    # Sur Windows
-    ```
-4.  Installez les dépendances :
-    ```bash
-    pip install -r requirements.txt
-    ```
-5.  Configurez vos identifiants API :
-    - Copiez `.env.example` vers `.env`.
-    - Éditez `.env` et renseignez votre `API_URL` et `API_KEY`.
-
-        ```env
-        API_URL="https://api.ai.cloud-temple.com/v1"
-        API_KEY="votre_cle_api_ici"
-        ```
-
-## Utilisation
+### 1. Installation
 
 ```bash
-python mini_chat.py [OPTIONS]
+# Naviguez vers le répertoire
+cd exemples/mini-chat/
+
+# Créez un environnement virtuel (recommandé)
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate    # Windows
+
+# Installez les dépendances
+pip install -r requirements.txt
 ```
 
-**Options principales :**
+### 2. Configuration
 
-- `--model TEXT` : Nom du modèle à utiliser (ex: `gemma3:4b`).
-- `--max-tokens INTEGER` : Max tokens pour la réponse (défaut: 1024).
-- `--temperature FLOAT` : Température pour la génération (défaut: 0.7).
-- `--system-prompt TEXT` ou `-sp TEXT`: Prompt système initial.
-- `--debug / --no-debug` : Active/désactive l'affichage des payloads API.
-- `--api-url TEXT` : URL de l'API LLMaaS (écrase `.env`).
-- `--api-key TEXT` : Clé API LLMaaS (écrase `.env`).
-- `--load-session CHEMIN_FICHIER_JSON`: Charge une session de chat sauvegardée.
-- `--autosave-json CHEMIN_FICHIER_JSON`: Sauvegarde automatiquement la session en JSON à la fin.
-- `--autosave-md CHEMIN_FICHIER_MD`: Sauvegarde automatiquement l'historique en Markdown à la fin.
-- `--godmode`: Active le mode GOD MODE (aucune confirmation pour les commandes shell).
-- `--silent`: Mode silencieux (moins d'output, n'affiche pas les outils ni les statistiques).
-- `--rules CHEMIN_FICHIER_MD`: Fichier Markdown de règles à ajouter au prompt système.
-- `--prompt TEXT`: Prompt initial à envoyer au LLM au démarrage.
-- `--non-interactive`: Mode non interactif (termine après la première réponse complète du LLM). N'affiche pas le message de bienvenue.
-- `--no-stream`: Désactive le streaming de la réponse de l'IA.
-- `--help` : Affiche l'aide.
+```bash
+# Copiez le fichier de configuration
+cp .env.example .env
 
-**Commandes en cours de chat :**
+# Éditez .env avec vos paramètres
+nano .env
+```
 
-- `/quit` ou `/exit` : Quitte le chat.
-- `/history` : Affiche l'historique de la conversation.
-- `/clear` : Efface l'historique (conserve les paramètres de session comme le prompt système).
-- `/model` : Change de modèle (réinitialise l'historique, conserve le prompt système).
-- `/system <prompt>` : Définit ou modifie le prompt système (réinitialise l'historique).
-- `/system_clear` : Supprime le prompt système (réinitialise l'historique).
-- `/save_session <fichier.json>` : Sauvegarde la session actuelle (paramètres et historique).
-- `/load_session <fichier.json>` : Charge une session (écrase la session actuelle).
-- `/savemd <fichier.md>` : Sauvegarde l'historique actuel en Markdown.
-- `/tools` : Liste les outils disponibles et leur description (non affiché en mode silencieux).
-- `/smol` : Demande au modèle de condenser l'historique actuel en un prompt efficace.
-- `/debug` : Active/désactive le mode debug.
-- `/silent`: Active/désactive le mode silencieux.
-- `/stream`: Active/désactive le mode streaming pour la réponse de l'IA.
-- `/help` : Affiche l'aide détaillée des commandes.
+**Configuration minimale** :
+```env
+API_URL="https://api.ai.cloud-temple.com/v1"
+API_KEY="votre_cle_api_ici"
+DEFAULT_MODEL="qwen3:30b-a3b"
+```
+
+### 3. Démarrage de Qdrant (pour le RAG)
+
+**Option A : Docker (recommandé)**
+```bash
+# Démarrage simple
+docker run -p 6333:6333 qdrant/qdrant
+
+# Ou avec persistance des données
+docker run -p 6333:6333 -v $(pwd)/qdrant_storage:/qdrant/storage qdrant/qdrant
+```
+
+**Option B : Docker Compose**
+```bash
+# Utilisez le fichier fourni
+docker-compose up -d
+```
+
+**Option C : Installation locale**
+```bash
+# Suivez les instructions sur https://qdrant.tech/documentation/quick-start/
+```
+
+### 4. Premier Lancement
+
+```bash
+# Lancement simple
+python mini_chat.py
+
+# Avec un modèle spécifique
+python mini_chat.py --model qwen3:4b
+
+# Mode debug pour voir les détails
+python mini_chat.py --debug
+```
+
+## 🎯 Fonctionnalités Principales
+
+### 💬 Chat Intelligent
+- **Streaming en temps réel** : Réponses affichées au fur et à mesure
+- **Historique persistant** : Navigation avec les flèches ↑/↓
+- **Autocomplétion** : 23 commandes avec Tab
+- **Modes flexibles** : Debug, silencieux, non-interactif
+
+### 🛠️ Outils Intégrés
+- **🕒 Horloge** : Heure actuelle
+- **🧮 Calculatrice** : Expressions mathématiques
+- **📁 Fichiers** : Lecture et sauvegarde
+- **⚡ Shell** : Exécution de commandes (avec confirmation)
+- **🔍 RAG** : Recherche dans une base de connaissances vectorielle
+
+### 🧠 RAG (Retrieval-Augmented Generation)
+- **Ingestion automatique** : Commande `/embed` pour ajouter des documents
+- **Recherche intelligente** : Seuils de similarité configurables
+- **Activation flexible** : Mode automatique ou manuel
+- **Diagnostic complet** : Gestion et monitoring de la base Qdrant
+
+## 📋 Guide d'Utilisation
+
+### Configuration RAG
+
+1. **Démarrez Qdrant** (voir section Démarrage Rapide)
+
+2. **Configurez .env** :
+```env
+# Paramètres Qdrant
+QDRANT_URL="localhost"
+QDRANT_PORT=6333
+QDRANT_COLLECTION="minichat_rag"
+EMBEDDING_MODEL="granite-embedding:278m"
+
+# Paramètres de chunking (en tokens)
+RAG_CHUNK_SIZE=256
+RAG_CHUNK_OVERLAP=50
+```
+
+3. **Ingérez des documents** :
+```bash
+# Dans le chat
+/embed constitution.txt
+```
+
+4. **Activez le RAG** :
+```bash
+/rag on
+```
+
+### Commandes Essentielles
+
+#### Gestion de Session
+```bash
+/model                    # Changer de modèle
+/system <prompt>          # Définir un prompt système
+/clear                    # Effacer l'historique
+/save_session chat.json   # Sauvegarder la session
+/load_session chat.json   # Charger une session
+```
+
+#### RAG et Documents
+```bash
+/embed <fichier>          # Ingérer un document
+/rag on|off              # Activer/désactiver le RAG
+/rag_threshold 0.8       # Configurer le seuil de similarité
+/qdrant_info             # Informations sur la base
+/qdrant_list             # Lister les documents
+```
+
+#### Diagnostic et Debug
+```bash
+/context                 # État de l'application
+/context all             # Contexte complet + JSON
+/debug                   # Mode debug on/off
+/tools                   # Liste des outils disponibles
+```
+
+## ⚙️ Options de Ligne de Commande
+
+### Options Principales
+```bash
+python mini_chat.py [OPTIONS]
+
+--model TEXT              # Modèle à utiliser
+--max-tokens INTEGER      # Limite de tokens (défaut: 8192)
+--temperature FLOAT       # Température (défaut: 0.7)
+--system-prompt TEXT      # Prompt système initial
+--debug / --no-debug      # Mode debug
+```
+
+### Options Avancées
+```bash
+--api-url TEXT            # URL de l'API (écrase .env)
+--api-key TEXT            # Clé API (écrase .env)
+--non-interactive         # Mode non-interactif
+--no-stream              # Désactiver le streaming
+--silent                 # Mode silencieux
+--godmode                # Pas de confirmation pour les commandes shell
+```
+
+### Options RAG
+```bash
+--qdrant-url TEXT         # URL Qdrant (défaut: localhost)
+--qdrant-port INTEGER     # Port Qdrant (défaut: 6333)
+--qdrant-collection TEXT  # Collection (défaut: minichat_rag)
+--embedding-model TEXT    # Modèle d'embedding
+```
+
+### Options de Session
+```bash
+--load-session FILE       # Charger une session
+--autosave-json FILE      # Sauvegarde auto en JSON
+--autosave-md FILE        # Sauvegarde auto en Markdown
+--rules FILE              # Fichier de règles Markdown
+--prompt TEXT             # Prompt initial
+```
+
+## 🔧 Configuration Avancée
+
+### Fichier .env Complet
+```env
+# API LLMaaS
+API_URL="https://api.ai.cloud-temple.com/v1"
+API_KEY="votre_cle_api_ici"
+DEFAULT_MODEL="qwen3:30b-a3b"
+MAX_TOKENS=8192
+
+# Qdrant pour RAG
+QDRANT_URL="localhost"
+QDRANT_PORT=6333
+QDRANT_COLLECTION="minichat_rag"
+EMBEDDING_MODEL="granite-embedding:278m"
+
+# Paramètres de chunking (en tokens)
+RAG_CHUNK_SIZE=256
+RAG_CHUNK_OVERLAP=50
+```
+
+### Docker Compose pour Qdrant
+```yaml
+version: '3.8'
+services:
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+```
+
+## 🧪 Tests et Validation
+
+### Test de l'Outil RAG
+```bash
+# Test unitaire de l'outil de recherche
+python test_rag_tool.py
+
+# Test avec une question constitutionnelle
+echo "Qui peut révoquer le Premier ministre ?" | python mini_chat.py --model qwen3:4b --non-interactive
+```
+
+### Diagnostic de l'Installation
+```bash
+# Vérifier la configuration
+python mini_chat.py --debug
+/context all
+
+# Tester la connexion Qdrant
+/qdrant_info
+```
+
+## 🛠️ Dépannage
+
+### Problèmes Courants
+
+**Qdrant non accessible**
+```bash
+# Vérifier que Qdrant fonctionne
+curl http://localhost:6333/health
+
+# Redémarrer Qdrant
+docker restart <container_id>
+```
+
+**RAG ne fonctionne pas**
+```bash
+# Dans le chat
+/qdrant_info              # Vérifier la connexion
+/rag_threshold 0.7        # Réduire le seuil
+/context                  # Diagnostic complet
+```
+
+**Limite de contexte dépassée**
+```bash
+/context                  # Voir le diagnostic automatique
+/smol                     # Condenser l'historique
+/clear                    # Effacer l'historique
+```
+
+**Problèmes de modèles**
+```bash
+# Lister les modèles disponibles
+python mini_chat.py --model ""
+
+# Tester avec un modèle plus petit
+python mini_chat.py --model qwen3:4b
+```
+
+## 📁 Structure du Projet
+
+```
+exemples/mini-chat/
+├── mini_chat.py              # Point d'entrée principal
+├── api_client.py             # Client API LLMaaS
+├── qdrant_utils.py           # Utilitaires Qdrant
+├── tools_definition.py       # Définitions des outils
+├── ui_utils.py               # Interface utilisateur
+├── session_manager.py        # Gestion des sessions
+├── rag_core.py               # Fonctions RAG
+├── command_handler.py        # Gestionnaire de commandes
+├── requirements.txt          # Dépendances Python
+├── .env.example              # Configuration exemple
+├── docker-compose.yml        # Configuration Qdrant
+└── test_rag_tool.py          # Tests unitaires
+```
+
+## 🎯 Exemples d'Usage
+
+### Chat Simple
+```bash
+python mini_chat.py --model qwen3:4b
+> Bonjour ! Comment allez-vous ?
+```
+
+### RAG avec Constitution
+```bash
+# 1. Démarrer Qdrant
+docker run -p 6333:6333 qdrant/qdrant
+
+# 2. Lancer mini-chat
+python mini_chat.py --model qwen3:30b-a3b
+
+# 3. Ingérer la constitution
+/embed constitution.txt
+
+# 4. Activer le RAG
+/rag on
+
+# 5. Poser une question
+> Qui peut dissoudre l'Assemblée nationale selon la Constitution ?
+```
+
+### Mode Non-Interactif
+```bash
+echo "Résume-moi les articles 1 à 5 de la Constitution" | \
+python mini_chat.py --model qwen3:4b --non-interactive --no-stream
+```
+
+### Session Persistante
+```bash
+# Sauvegarder
+python mini_chat.py --autosave-json ma_session.json
+
+# Reprendre plus tard
+python mini_chat.py --load-session ma_session.json
+```
+
+## 🔄 Mises à Jour
+
+### Version 1.3.1 (Actuelle)
+- ✅ **Bug critique résolu** : Outil de recherche vectorielle pleinement fonctionnel
+- ✅ **Gestion robuste des types** : Support universel des formats JSON
+- ✅ **Tests validés** : 4/4 requêtes traitées sans erreur
+- ✅ **Documentation complète** : Guide d'utilisation et dépannage
+
+### Fonctionnalités Précédentes
+- 🎯 **RAG intelligent** avec seuils configurables
+- 🔧 **Diagnostic avancé** des problèmes de contexte
+- 🛠️ **23 commandes** avec autocomplétion
+- 📊 **Gestion complète de Qdrant** (listing, suppression, informations)
+
+## 📞 Support
+
+Pour signaler un bug ou demander de l'aide :
+1. Utilisez `/context all` pour obtenir le diagnostic complet
+2. Consultez la section Dépannage ci-dessus
+3. Vérifiez les logs en mode `--debug`
+
+---
+
+**Mini-Chat LLMaaS** - Interface de chat intelligente avec RAG pour la plateforme LLMaaS

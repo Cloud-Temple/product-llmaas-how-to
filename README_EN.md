@@ -4,7 +4,7 @@ This repository contains a collection of code examples and scripts demonstrating
 
 ## 🆕 Changelog - Latest Updates
 
-### Version 2.1.0 - June 2025
+### Version 2.1.0
 
 #### 🔍 **GetFact - Fact Extractor**
 - ✨ **Reasoning Model Support**: Automatic handling of responses including thinking blocks (`<think>...</think>`)
@@ -30,6 +30,12 @@ This repository contains a collection of code examples and scripts demonstrating
 #### 📚 **RAG (Retrieval-Augmented Generation) Examples** ✨ *NEW EXAMPLES*
 - 🆕 **Simple RAG Demo**: An educational script to understand the basic mechanics of RAG with in-memory vectors.
 - 🆕 **RAG with Qdrant Demo**: A complete and containerized example using Qdrant as a vector database for more robust RAG applications.
+
+#### 💬 **Mini-Chat - Chat with RAG and Tools**
+- 🧠 **Full RAG Support**: Integration with the Qdrant vector database for responses augmented by your documents.
+- 🛠️ **Integrated Tools**: Includes calculator, clock, file access, shell command execution, and RAG search.
+- ⚙️ **Advanced Command-Line Interface**: Autocompletion, persistent history, and fine-grained session management.
+- 🚀 **Stability and Performance**: Stable and optimized version 1.3.1.
 
 ---
 
@@ -151,7 +157,7 @@ Simple script to list all models available via the LLMaaS API with their details
 Minimal example to demonstrate real-time streaming with the LLMaaS API. Shows SSE (Server-Sent Events) streaming activation, token-by-token display, and performance metrics calculation.
 
 ### 💬 [Mini Chat](./mini-chat/)
-Interactive command-line chat client to converse with LLM models, supporting history, system prompts, session saving/loading, and tool usage.
+An advanced interactive command-line chat client. It not only supports standard conversations with LLM models but also integrates a **full RAG system** via Qdrant and **23 built-in tools** (calculator, shell, file management, etc.). Ideal for complex use cases requiring both conversation and task execution.
 
 ### 🧪 [Test API Models](./test_api_models/)
 Python script to test and compare LLM models via API with external configuration, dynamic discovery, model selection, error handling, and performance summary.

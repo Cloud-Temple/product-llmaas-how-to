@@ -143,6 +143,7 @@ def execute_shell_command(command: str, **kwargs) -> str:
         # Limiter la taille de la sortie retournée au modèle
         if len(output) > 2000:
             output = output[:2000] + "\n[... Sortie tronquée ...]"
+        
         return output
     except subprocess.TimeoutExpired:
         return "Erreur: La commande a expiré (timeout)."
@@ -210,6 +211,23 @@ TOOLS_AVAILABLE = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_in_vector_database",
+            "description": "Recherche des informations pertinentes dans une base de connaissances interne (vectorielle) pour répondre à la question de l'utilisateur. Utilise cet outil si la question semble porter sur des documents ou des informations spécifiques qui pourraient se trouver dans la base.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "La question ou le sujet de recherche à utiliser pour trouver des informations pertinentes."
+                    }
+                },
+                "required": ["query"]
+            },
+        },
+    },
 ]
 
 TOOL_FUNCTIONS_MAP = {
@@ -218,4 +236,5 @@ TOOL_FUNCTIONS_MAP = {
     "read_file_content": read_file_content,
     "save_content_to_file": save_content_to_file,
     "execute_shell_command": execute_shell_command,
+    "search_in_vector_database": None, # La fonction réelle sera dans mini_chat.py
 }

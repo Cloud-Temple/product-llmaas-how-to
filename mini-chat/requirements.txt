@@ -1,4 +1,6 @@
-rich
 httpx
 python-dotenv
+rich
 click
+qdrant-client
+tiktoken

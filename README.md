@@ -4,7 +4,7 @@ Ce répertoire contient une collection d'exemples de code et de scripts démontr
 
 ## 🆕 Changelog - Dernières Nouveautés
 
-### Version 2.1.0 - Juin 2025
+### Version 2.1.0 - Juillet 2025
 
 #### 🔍 **GetFact - Extracteur de Faits**
 - ✨ **Support des modèles raisonneurs** : Gestion automatique des réponses incluant des blocs de pensée (`<think>...</think>`)
@@ -30,6 +30,12 @@ Ce répertoire contient une collection d'exemples de code et de scripts démontr
 #### 📚 **Exemples RAG (Retrieval-Augmented Generation)** ✨ *NOUVEAUX EXEMPLES*
 - 🆕 **Simple RAG Demo** : Un script pédagogique pour comprendre les mécanismes de base du RAG avec des vecteurs en mémoire.
 - 🆕 **RAG with Qdrant Demo** : Un exemple complet et conteneurisé utilisant Qdrant comme base de données vectorielle pour des applications RAG plus robustes.
+
+#### 💬 **Mini-Chat - Chat avec RAG et Outils**
+- 🧠 **Support RAG complet** : Intégration avec la base vectorielle Qdrant pour des réponses augmentées par vos documents.
+- 🛠️ **Outils intégrés** : Inclut calculatrice, horloge, accès aux fichiers, exécution de commandes shell et recherche RAG.
+- ⚙️ **Interface en ligne de commande avancée** : Autocomplétion, historique persistant, et gestion fine des sessions.
+- 🚀 **Stabilité et performance** : Version 1.3.1 stable et optimisée.
 
 ---
 
@@ -151,7 +157,7 @@ Script simple pour lister tous les modèles disponibles via l'API LLMaaS avec le
 Exemple minimal pour démontrer le streaming en temps réel avec l'API LLMaaS. Montre l'activation du streaming SSE (Server-Sent Events), l'affichage token par token, et le calcul des métriques de performance.
 
 ### 💬 [Mini Chat](./mini-chat/)
-Client de chat en ligne de commande interactif pour converser avec les modèles LLM, supportant l'historique, les prompts système, la sauvegarde/chargement de session et l'utilisation d'outils.
+Client de chat en ligne de commande interactif et avancé. Il supporte non seulement les conversations standards avec les modèles LLM, mais intègre également un **système RAG complet** via Qdrant et **23 outils intégrés** (calculatrice, shell, gestion de fichiers, etc.). Idéal pour des cas d'usage complexes nécessitant à la fois conversation et exécution de tâches.
 
 ### 🧪 [Test API Models](./test_api_models/)
 Script Python pour tester et comparer des modèles LLM via API avec configuration externe, découverte dynamique, sélection de modèles, gestion d'erreurs et résumé des performances.
