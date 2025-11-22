@@ -106,6 +106,10 @@ Chaque exemple est organisé dans son propre sous-répertoire avec :
 
 Découvrez les capacités de l'API LLMaaS Cloud Temple à travers ces captures d'écran des exemples en action :
 
+### 👁️ DeepSeek-OCR Vision & Extraction
+![DeepSeek OCR Demo](./screenshoot/ocrdemo.png)
+*Conversion d'un document complexe (PDF/Image) en Markdown structuré, préservant tableaux et mise en forme*
+
 ### 🚀 Streaming en Temps Réel
 ![Streaming Demo](./screenshoot/streaming_01.png)
 *Démonstration du streaming SSE avec affichage token par token et métriques de performance en temps réel*
