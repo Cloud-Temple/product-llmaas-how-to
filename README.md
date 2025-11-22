@@ -4,6 +4,14 @@ Ce répertoire contient une collection d'exemples de code et de scripts démontr
 
 ## 🆕 Changelog - Dernières Nouveautés
 
+### Version 2.2.0 - Novembre 2025
+
+#### 👁️ **DeepSeek-OCR - Vision & Extraction** ✨ *NOUVEL EXEMPLE*
+- 📄 **Conversion Markdown structurée** : Transforme n'importe quel document (PDF, image) en Markdown propre (tableaux, titres)
+- 🧮 **Support Mathématiques** : Transcription précise des formules en LaTeX
+- 📑 **Traitement PDF multipages** : Conversion page par page des documents longs
+- 🖼️ **Optimisation intelligente** : Prétraitement des images (zoom, conversion RGB) pour une lisibilité maximale
+
 ### Version 2.1.0 - Juillet 2025
 
 #### 🔍 **GetFact - Extracteur de Faits**
@@ -134,6 +142,9 @@ Découvrez les capacités de l'API LLMaaS Cloud Temple à travers ces captures d
 *Exécution du script RAG simple, montrant les étapes de vectorisation, recherche et génération augmentée*
 
 ## Exemples Disponibles
+
+### 👁️ [DeepSeek-OCR Demo](./deepseek-ocr_demo/)
+Démonstration de la puissance du modèle DeepSeek-OCR (Janus-Pro) pour la conversion intelligente de documents visuels. Contrairement aux OCR classiques, il comprend la structure du document : tableaux complexes, hiérarchie des titres et formules mathématiques sont préservés et convertis en Markdown structuré. Supporte les images et les PDF multipages.
 
 ### 📸 [PhotoAnalyzer](./photoanalyzer/)
 PhotoAnalyzer est un outil CLI Python avancé pour l'analyse d'images utilisant l'API LLMaaS avec des modèles multimodaux. Il offre une interface utilisateur soignée avec modes debug, formats de sortie multiples, et support de différents types de prompts d'analyse spécialisés.
