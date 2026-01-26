@@ -4,6 +4,54 @@ This repository contains a collection of code examples and scripts demonstrating
 
 ## 🆕 Changelog - Latest Updates
 
+### Version 3.0.0 - January 26, 2026
+
+#### 💬 **Mini-Chat v3.0 - Major Architectural Overhaul**
+- 🏗️ **Modular Architecture**: Complete code rewrite (`Service`, `State`, `Config`, `CLI`) for maximum robustness and maintainability.
+- 🧠 **Advanced & Stable RAG**: Fully validated RAG pipeline (Ingestion -> Qdrant -> Generation) with automatic collection management.
+- 🛠️ **Reliable Tool Calling**: Fixed streaming issues with tools (calculator, shell, etc.) thanks to fine-grained JSON chunk handling.
+- ⚡ **Default Model**: Switch to `openai/gpt-oss-120b` for optimal conversational performance.
+- 🧪 **Automated Tests**: Added a test scenario script (`test_rag_scenario.py`) to validate RAG configuration in one click.
+
+#### 📸 **PhotoAnalyzer - Qwen3 VL & Omni Support**
+- 🤖 **SOTA Multimodal Models**: Integration and validation of **Qwen3-VL** (8b, 30b) and **Qwen3-Omni** models.
+- 🔌 **API Standardization**: Updated client to use the standard `image_url` format, ensuring maximum compatibility.
+- 📝 **Enriched Documentation**: User guide updated with specific examples for the new models.
+
+#### 🧠 **Qwen-Omni - Native Multimodal Capabilities**
+- 🚀 **New Example**: Added a dedicated demonstration (`qwen_omni_demo`) illustrating simultaneous text and image understanding capabilities.
+- ✨ **Performance**: Ultra-fast response times and high-level contextual understanding.
+
+#### 🏥 **MedGemma - Medical Image Analysis**
+- 🧬 **Specialization**: Validation and bilingual update of the medical imaging analysis example (X-ray, CT scan) via the expert model `medgemma:27b`.
+
+####  **Status API Demo - Dashboard & Energy**
+- 📈 **Real-Time Monitoring**: Created a dashboard to monitor platform health and model performance (TTFB, tok/s).
+- ⚡ **Official Energy Map**: Integrated actual energy consumption coefficients (kWh/Mtoken) updated on 01/26/2026.
+- 🌍 **Bilingual Documentation**: Full FR/EN support for better accessibility.
+
+### Version 2.2.1 - January 25, 2026
+
+#### 🔍 **GetFact - Robust JSON & 16k max_tokens**
+- 🧱 **Truncated Response Handling**: Improved resistance to incomplete outputs (`finish_reason=length`) using JSON-only instructions and a retry strategy.
+- 🔢 **Increased Generation Limit**: Default value raised to **16384 tokens** (`.env` / `.env.example` config) to reduce the likelihood of truncation on dense chunks.
+- 🧠 **Business Ontologies**: Detailed documentation of 6 ready-to-use ontologies (Legal, HR, DevOps, Security, Infrastructure, IT Management).
+
+#### 🌐 **Translate - Large Document Translation**
+- 📅 **Date and Version**: Script updated to 01/25/2026 (v1.2.1).
+- 🧩 **Intelligent Chunking**: Splitting algorithm respecting paragraph and sentence structures to maintain meaning.
+- 💎 **TranslateGemma Support**: Specific prompt format and optimized parameters for Google TranslateGemma models.
+- 🔗 **Contextual Consistency**: Sliding context system between chunks for homogeneous translation from the beginning to the end of the document.
+- ✍️ **Documentation**: Didactic comments added to explain asynchronous flows and ISO language management.
+
+### Version 2.2.0
+
+#### 👁️ **DeepSeek-OCR - Vision & Extraction** ✨ *NEW EXAMPLE*
+- 📄 **Structured Markdown Conversion**: Transforms any document (PDF, image) into clean Markdown (tables, titles)
+- 🧮 **Math Support**: Precise transcription of formulas into LaTeX
+- 📑 **Multipage PDF Processing**: Page-by-page conversion of long documents
+- 🖼️ **Intelligent Optimization**: Image preprocessing (zoom, RGB conversion) for maximum readability
+
 ### Version 2.1.0
 
 #### 🔍 **GetFact - Fact Extractor**
@@ -35,7 +83,7 @@ This repository contains a collection of code examples and scripts demonstrating
 - 🧠 **Full RAG Support**: Integration with the Qdrant vector database for responses augmented by your documents.
 - 🛠️ **Integrated Tools**: Includes calculator, clock, file access, shell command execution, and RAG search.
 - ⚙️ **Advanced Command-Line Interface**: Autocompletion, persistent history, and fine-grained session management.
-- 🚀 **Stability and Performance**: Stable and optimized version 1.3.1.
+- 🚀 **v3.0 Architecture**: Complete refactoring with robust modular architecture, advanced error handling, and `gpt-oss-120b` as default model.
 
 ---
 
@@ -98,6 +146,10 @@ Each example is organized in its own subdirectory with:
 
 Discover the capabilities of the Cloud Temple LLMaaS API through these screenshots of the examples in action:
 
+### 👁️ DeepSeek-OCR Vision & Extraction
+![DeepSeek OCR Demo](./screenshoot/ocrdemo.png)
+*Conversion of a complex document (PDF/Image) into structured Markdown, preserving tables and formatting*
+
 ### 🚀 Real-time Streaming
 ![Streaming Demo](./screenshoot/streaming_01.png)
 *SSE streaming demonstration with token-by-token display and real-time performance metrics*
@@ -135,6 +187,15 @@ Discover the capabilities of the Cloud Temple LLMaaS API through these screensho
 
 ## Available Examples
 
+### 👁️ [DeepSeek-OCR Demo](./deepseek-ocr_demo/)
+Demonstration of the power of the DeepSeek-OCR (Janus-Pro) model for intelligent conversion of visual documents. Unlike traditional OCRs, it understands document structure: complex tables, title hierarchies, and mathematical formulas are preserved and converted into structured Markdown. Supports images and multipage PDFs.
+
+### 🧠 [Qwen-Omni Demo](./qwen_omni_demo/)
+Example of using the new **Qwen3-Omni** model, the flagship of native multimodality. This model is capable of simultaneously processing and reasoning on complex inputs mixing text and vision with exceptional fluidity and increased accuracy on visual details.
+
+### 🏥 [MedGemma Analysis](./medgemma_analysis/)
+Using the specialized **MedGemma** model for medical imaging analysis. This example demonstrates how AI can assist healthcare professionals in describing anatomical structures and identifying potential abnormalities from X-rays or CT scans.
+
 ### 📸 [PhotoAnalyzer](./photoanalyzer/)
 PhotoAnalyzer is an advanced Python CLI tool for image analysis using the LLMaaS API with multimodal models. It offers a polished user interface with debug modes, multiple output formats, and support for various specialized analysis prompt types.
 
@@ -151,13 +212,16 @@ An educational RAG demonstrator to illustrate how Retrieval-Augmented Generation
 A complete and containerized RAG demonstrator using Qdrant as a vector database. The LLMaaS API is used for document embedding and generating augmented responses.
 
 ### 📝 [List Models](./list_models/)
-Simple script to list all models available via the LLMaaS API with their details, specifications, and statuses.
+Advanced script to list all models available via the LLMaaS API with their details, specifications, and statuses. The script includes functional categorization of models (General Language, Embedding, Vision, OCR, etc.) to facilitate their selection according to the intended use.
 
 ### 🚀 [Streaming Demo](./streaming-demo/)
 Minimal example to demonstrate real-time streaming with the LLMaaS API. Shows SSE (Server-Sent Events) streaming activation, token-by-token display, and performance metrics calculation.
 
 ### 💬 [Mini Chat](./mini-chat/)
-An advanced interactive command-line chat client. It not only supports standard conversations with LLM models but also integrates a **full RAG system** via Qdrant and **23 built-in tools** (calculator, shell, file management, etc.). Ideal for complex use cases requiring both conversation and task execution.
+Interactive command-line chat client (v3.0) refactored for maximum stability. It supports not only standard conversations with LLM models but also integrates a **complete RAG system** via Qdrant and **integrated tools** (calculator, shell, file management, etc.). This new version offers a modular architecture and robust management of streaming tool calls.
+
+### 📊 [Status API Demo](./status_api_demo/)
+Demonstration script for the platform's public status API. It allows monitoring the overall health of LLMaaS, retrieving real-time performance metrics (TTFB, throughput), and accurately estimating energy consumption per model.
 
 ### 🧪 [Test API Models](./test_api_models/)
 Python script to test and compare LLM models via API with external configuration, dynamic discovery, model selection, error handling, and performance summary.
@@ -173,6 +237,14 @@ Python script to translate text files by segments, using an LLM model and mainta
 
 ### 🎵 [Transkryptor](./transkryptor/)
 Advanced Python CLI tool for transcribing large audio files, using intelligent chunking, parallel batch processing, audio normalization, and a polished user interface.
+
+### 🐣 [Educational Examples (Simple)](./)
+Series of minimalist examples designed to learn the base functions of the API:
+- **[Simple RAG Demo](./simple_rag_demo/)**: RAG basics with in-memory vectors.
+- **[Simple Tool Calling](./simple_tool_calling/)**: How to connect the LLM to a Python function (calculator).
+- **[Simple Vision](./simple_vision/)**: Basic image analysis with multimodal models.
+- **[Simple TTS](./simple_tts/)**: Fast speech synthesis and audio playback.
+- **[Simple Translate](./simple_translate/)**: Optimized text translation with TranslateGemma.
 
 ## Configuration
 

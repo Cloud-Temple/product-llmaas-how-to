@@ -1,6 +1,6 @@
 # Exemple : Lister les Modèles LLMaaS avec Style
 
-Ce script Python (`list_models.py`) est un exemple élégant pour interroger l'endpoint `/v1/models` de l'**API LLMaaS Cloud Temple** et afficher la liste des modèles disponibles dans un tableau bien formaté en utilisant la bibliothèque `rich`.
+Ce script Python (`list_models.py`) est un exemple élégant pour interroger l'endpoint `/v1/models` de l'**API LLMaaS Cloud Temple** et afficher la liste des modèles disponibles dans un tableau bien formaté en utilisant la bibliothèque `rich`, avec une catégorisation fonctionnelle des modèles.
 
 📖 **Documentation complète** : [docs.cloud-temple.com](https://docs.cloud-temple.com)
 
@@ -10,6 +10,7 @@ Ce script Python (`list_models.py`) est un exemple élégant pour interroger l'e
 - Appel à l'API LLMaaS pour récupérer la liste des modèles.
 - Gestion des erreurs de connexion et des réponses HTTP.
 - Affichage des modèles dans un tableau clair et coloré, triés par ID.
+- Catégorisation fonctionnelle des modèles (Langage Généraliste, Embedding, Vision, OCR, etc.).
 - Indication visuelle de la progression lors de l'appel API.
 
 ## Prérequis
@@ -55,7 +56,7 @@ Une fois l'installation et la configuration terminées, exécutez simplement le 
 python list_models.py
 ```
 
-Le script affichera un tableau listant les modèles disponibles, avec leur ID, propriétaire, type d'objet, date de création et alias.
+Le script affichera un tableau listant les modèles disponibles, avec leur ID, propriétaire, type d'objet, **type de modèle (catégorie fonctionnelle)**, date de création et alias.
 
 ## Structure du Répertoire
 
@@ -71,6 +72,7 @@ list_models_pretty/
 
 - **URL de l'API et Token** : Modifiez le fichier `.env` pour pointer vers votre instance LLMaaS.
 - **Affichage du Tableau** : Le script utilise `rich.table.Table`. Vous pouvez personnaliser les colonnes, les styles et le tri directement dans la fonction `display_models_table` du script `list_models.py`.
+- **Catégorisation des Modèles** : La fonction `categorize_model()` dans `list_models.py` détermine la catégorie fonctionnelle de chaque modèle. Vous pouvez modifier cette fonction pour adapter la logique de catégorisation à vos besoins.
 
 ---
 

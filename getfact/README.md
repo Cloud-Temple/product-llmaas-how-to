@@ -19,16 +19,16 @@ Ce script permet d'extraire automatiquement les faits et les relations entre fai
 
 ## 🧠 Ontologies Spécialisées
 
-GetFact inclut 6 ontologies métier prêtes à l'emploi pour une extraction contextuelle optimisée :
+GetFact inclut 6 ontologies métier prêtes à l'emploi pour une extraction contextuelle optimisée. Ces fichiers se trouvent dans le dossier `ontologies/`.
 
-| Ontologie | Domaine | Fichier | Usage |
-|-----------|---------|---------|-------|
-| 🏛️ **Juridique** | Droit, contentieux, compliance | `ontologie_droit.yaml` | Contrats, jugements, conformité |
-| 👥 **RH** | Ressources humaines, SIRH | `ontologie_rh.yaml` | CV, entretiens, mobilité |
-| 💻 **Développement** | DevOps, ingénierie logicielle | `ontologie_developpement.yaml` | Code, architectures, métriques |
-| 🔒 **Sécurité** | Cybersécurité, RSSI | `ontologie_securite_logique.yaml` | Incidents, vulnérabilités, audits |
-| ☁️ **Infrastructure** | Cloud, datacenters, réseaux | `ontologie_infrastructure_cloud.yaml` | Serveurs, coûts, performance |
-| 🤝 **Infogérance** | Services managés, ITIL | `ontologie_infogerance.yaml` | SLA, tickets, processus |
+| Ontologie               | Domaine                        | Fichier                               | Description & Usage                                                                                                                                                                                               |
+| ----------------------- | ------------------------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🏛️ **Juridique**     | Droit, contentieux, compliance | `ontologie_droit.yaml`                | **Entités** : Avocats, Juges, Articles de loi, Contrats.<br>**Relations** : "enfreint", "stipule que", "poursuit en justice".<br>**Usage** : Analyse de contrats, de jugements, de documents de conformité.       |
+| 👥 **RH**              | Ressources humaines, SIRH      | `ontologie_rh.yaml`                   | **Entités** : Candidats, Postes, Compétences, Diplômes.<br>**Relations** : "a pour compétence", "a travaillé chez", "postule pour".<br>**Usage** : Analyse de CV, comptes-rendus d'entretiens, plans de carrière. |
+| 💻 **Développement**   | DevOps, ingénierie logicielle  | `ontologie_developpement.yaml`        | **Entités** : Langages, Frameworks, Bugs, Features, PR.<br>**Relations** : "dépend de", "corrige", "implémente".<br>**Usage** : Analyse de documentation technique, tickets Jira, code reviews.                   |
+| 🔒 **Sécurité**        | Cybersécurité, RSSI            | `ontologie_securite_logique.yaml`     | **Entités** : Menaces, Vulnérabilités (CVE), Actifs, Attaquants.<br>**Relations** : "exploite", "mitige", "affecte".<br>**Usage** : Rapports d'incidents, audits de sécurité, analyse de menaces.                 |
+| ☁️ **Infrastructure** | Cloud, datacenters, réseaux    | `ontologie_infrastructure_cloud.yaml` | **Entités** : VM, Conteneurs, VPC, Load Balancers.<br>**Relations** : "hébergé sur", "connecté à", "protégé par".<br>**Usage** : Rapports d'inventaire, documents d'architecture, logs d'infrastructure.          |
+| 🤝 **Infogérance**     | Services managés, ITIL         | `ontologie_infogerance.yaml`          | **Entités** : SLA, Tickets, Incidents, Changements.<br>**Relations** : "résolu par", "escaladé vers", "impacte".<br>**Usage** : Suivi de qualité de service, rapports d'activité, gestion des incidents.          |
 
 ### Exemples d'usage par domaine
 
@@ -86,7 +86,8 @@ LLMAAS_GETFACT_MODEL=qwen3:14b
 LLMAAS_OUTPUT_FORMAT=json
 
 # Nombre maximum de tokens pour les réponses
-LLMAAS_MAX_TOKENS=4096
+# Recommandé : 16384 pour réduire le risque de réponses tronquées (finish_reason=length)
+LLMAAS_MAX_TOKENS=16384
 
 # Taille des chunks en mots
 LLMAAS_CHUNK_SIZE_WORDS=500
@@ -304,9 +305,9 @@ python getfact.py --file documentation.md --output-format yaml --chunk-size-word
 
 | Taille document | chunk-size-words | max-tokens | Modèle      |
 | --------------- | ---------------- | ---------- | ----------- |
-| < 1000 mots     | 500              | 2048       | granite3:8b |
-| 1000-5000 mots  | 400              | 3072       | qwen3:14b   |
-| > 5000 mots     | 300              | 4096       | qwen3:14b   |
+| < 1000 mots     | 500              | 4096       | granite3:8b |
+| 1000-5000 mots  | 400              | 8192       | qwen3:14b   |
+| > 5000 mots     | 300              | 16384      | qwen3:14b   |
 
 ### Conseils d'optimisation
 - **Ontologie** : Utilisez une ontologie spécialisée pour votre domaine
@@ -328,7 +329,19 @@ Erreur: La variable d'environnement LLMAAS_API_KEY n'est pas définie.
 ```
 Attention: Réponse JSON invalide pour le chunk 2
 ```
-→ Le script est maintenant plus robuste et tente d'extraire le JSON même si la réponse est malformée. Si l'erreur persiste, elle peut être due à une réponse tronquée par l'API. Dans ce cas, essayez d'augmenter la valeur de `--max-tokens`.
+→ Le script est maintenant plus robuste et tente d'extraire le JSON même si la réponse est malformée.
+
+### Cas particulier : réponse tronquée (`finish_reason=length`)
+Sur des chunks volumineux, le modèle peut produire une réponse trop longue, qui est **tronquée** par l'API. Cela se manifeste souvent par :
+- `finish_reason=length` côté API
+- des erreurs JSON du type `Unterminated string` ou `Expecting property name enclosed in double quotes`
+
+✅ **Mitigation implémentée** : le script détecte automatiquement ce cas et relance une seconde requête **plus concise** (retry) afin d'obtenir un JSON complet.
+
+💡 **Conseils complémentaires** si vous rencontrez encore le problème :
+- Réduire la taille des chunks : `--chunk-size-words 250`
+- Réduire le nombre de types de faits : `--fact-types entities events relationships`
+- Utiliser un modèle plus concis / plus adapté
 
 **Timeout API**
 ```
@@ -359,8 +372,3 @@ Cet exemple fait partie du projet LLMaaS de Cloud Temple. Pour toute suggestion 
 ## 📄 Licence
 
 Ce script est distribué sous la même licence que le projet LLMaaS principal.
-
----
-
-**Cloud Temple - LLMaaS Team**  
-*Intelligence Artificielle Souveraine et Sécurisée*

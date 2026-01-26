@@ -4,6 +4,45 @@ Ce répertoire contient une collection d'exemples de code et de scripts démontr
 
 ## 🆕 Changelog - Dernières Nouveautés
 
+### Version 3.0.0 - 26 Janvier 2026
+
+#### 💬 **Mini-Chat v3.0 - Refonte Architecturale Majeure**
+- 🏗️ **Architecture Modulaire** : Refonte complète du code (`Service`, `State`, `Config`, `CLI`) pour une robustesse et une maintenabilité maximales.
+- 🧠 **RAG Avancé & Stable** : Pipeline RAG entièrement validé (Ingestion -> Qdrant -> Génération) avec gestion automatique des collections.
+- 🛠️ **Tool Calling Fiable** : Correction des problèmes de streaming avec les outils (calculatrice, shell, etc.) grâce à une gestion fine des chunks JSON.
+- ⚡ **Modèle par Défaut** : Passage à `openai/gpt-oss-120b` pour des performances conversationnelles optimales.
+- 🧪 **Tests Automatisés** : Ajout d'un script de scénario de test (`test_rag_scenario.py`) pour valider la configuration RAG en un clic.
+
+#### 📸 **PhotoAnalyzer - Support Qwen3 VL & Omni**
+- 🤖 **Modèles Multimodaux SOTA** : Intégration et validation des modèles **Qwen3-VL** (8b, 30b) et **Qwen3-Omni**.
+- 🔌 **Standardisation API** : Mise à jour du client pour utiliser le format standard `image_url`, assurant une compatibilité maximale.
+- 📝 **Documentation Enrichie** : Guide d'utilisation mis à jour avec des exemples spécifiques pour les nouveaux modèles.
+
+#### 🧠 **Qwen-Omni - Capacités Multimodales Natives**
+- 🚀 **Nouvel Exemple** : Ajout d'une démonstration dédiée (`qwen_omni_demo`) illustrant les capacités de compréhension simultanée du texte et des images.
+- ✨ **Performance** : Temps de réponse ultra-rapides et compréhension contextuelle de haut niveau.
+
+#### 🏥 **MedGemma - Analyse d'Images Médicales**
+- 🧬 **Spécialisation** : Validation et mise à jour bilingue de l'exemple d'analyse d'imagerie médicale (radio, scanner) via le modèle expert `medgemma:27b`.
+
+#### 📊 **Status API Demo - Dashboard & Énergie**
+- 📈 **Monitoring en Temps Réel** : Création d'un tableau de bord pour surveiller l'état de santé de la plateforme et les performances des modèles (TTFB, tok/s).
+- ⚡ **Energy Map Officielle** : Intégration des coefficients de consommation énergétique réels (kWh/Mtoken) mis à jour au 26/01/2026.
+
+### Version 2.2.1 - 25 Janvier 2026
+
+#### 🔍 **GetFact - Robustesse JSON & max_tokens 16k**
+- 🧱 **Gestion des réponses tronquées** : meilleure résistance aux sorties incomplètes (`finish_reason=length`) grâce à des consignes JSON-only et une stratégie de retry.
+- 🔢 **Limite de génération augmentée** : valeur par défaut portée à **16384 tokens** (config `.env` / `.env.example`) pour réduire la probabilité de troncature sur des chunks denses.
+- 🧠 **Ontologies Métiers** : Documentation détaillée des 6 ontologies prêtes à l'emploi (Droit, RH, DevOps, Sécurité, Infrastructure, Infogérance).
+
+#### 🌐 **Translate - Traduction de documents volumineux**
+- 📅 **Date et Version** : Script mis à jour au 25/01/2026 (v1.2.1).
+- 🧩 **Chunking Intelligent** : Algorithme de découpage respectant les structures de paragraphes et de phrases pour maintenir le sens.
+- 💎 **Support TranslateGemma** : Format de prompt spécifique et paramètres optimisés pour les modèles Google TranslateGemma.
+- 🔗 **Cohérence Contextuelle** : Système de contexte glissant entre les chunks pour une traduction homogène du début à la fin du document.
+- ✍️ **Documentation** : Commentaires didactiques ajoutés pour expliquer les flux asynchrones et la gestion des langues ISO.
+
 ### Version 2.2.0 - Novembre 2025
 
 #### 👁️ **DeepSeek-OCR - Vision & Extraction** ✨ *NOUVEL EXEMPLE*
@@ -19,12 +58,13 @@ Ce répertoire contient une collection d'exemples de code et de scripts démontr
 - 🛠️ **Parsing JSON robuste** : Extraction fiable du contenu JSON même depuis des réponses malformées
 - 🐛 **Mode debug avancé** : Logs détaillés incluant le découpage précis, les payloads JSON complets et les réponses brutes de l'API
 
+
 #### 🎵 **Transkryptor - Transcription Audio**
 - 🔄 **Résilience aux erreurs** : Mécanisme de retry avec backoff exponentiel pour une meilleure stabilité
 - ✨ **Raffinement de transcription (`--rework`)** : Nouvelle option pour améliorer la transcription via un modèle de langage
 - 📄 **Script `rework-only.py`** : Nouveau script dédié pour raffiner des fichiers texte existants
 - 🔗 **Contexte continu (`--rework-follow`)** : Maintien du contexte entre les lots pour une meilleure cohérence
-- 📊 **Recommandations de qualité** : Configuration optimale basée sur des tests (20s pour contenu complexe, 10s pour dialogues)
+- � **Recommandations de qualité** : Configuration optimale basée sur des tests (20s pour contenu complexe, 10s pour dialogues)
 - 📦 **Dépendances étendues** : Ajout de `tiktoken` et `langchain-text-splitters` pour un meilleur découpage
 
 #### 📝 **Summarizer - Synthèse de Texte** ✨ *NOUVEL OUTIL*
@@ -43,7 +83,7 @@ Ce répertoire contient une collection d'exemples de code et de scripts démontr
 - 🧠 **Support RAG complet** : Intégration avec la base vectorielle Qdrant pour des réponses augmentées par vos documents.
 - 🛠️ **Outils intégrés** : Inclut calculatrice, horloge, accès aux fichiers, exécution de commandes shell et recherche RAG.
 - ⚙️ **Interface en ligne de commande avancée** : Autocomplétion, historique persistant, et gestion fine des sessions.
-- 🚀 **Stabilité et performance** : Version 1.3.1 stable et optimisée.
+- 🚀 **Architecture v3.0** : Refonte complète avec architecture modulaire robuste, gestion d'erreurs avancée et modèle par défaut `gpt-oss-120b`.
 
 ---
 
@@ -150,6 +190,12 @@ Découvrez les capacités de l'API LLMaaS Cloud Temple à travers ces captures d
 ### 👁️ [DeepSeek-OCR Demo](./deepseek-ocr_demo/)
 Démonstration de la puissance du modèle DeepSeek-OCR (Janus-Pro) pour la conversion intelligente de documents visuels. Contrairement aux OCR classiques, il comprend la structure du document : tableaux complexes, hiérarchie des titres et formules mathématiques sont préservés et convertis en Markdown structuré. Supporte les images et les PDF multipages.
 
+### 🧠 [Qwen-Omni Demo](./qwen_omni_demo/)
+Exemple d'utilisation du nouveau modèle **Qwen3-Omni**, fleuron de la multimodalité native. Ce modèle est capable de traiter et de raisonner simultanément sur des entrées complexes mêlant texte et vision avec une fluidité exceptionnelle et une précision accrue sur les détails visuels.
+
+### 🏥 [MedGemma Analysis](./medgemma_analysis/)
+Utilisation du modèle spécialisé **MedGemma** pour l'analyse d'imagerie médicale. Cet exemple démontre comment l'IA peut assister les professionnels de santé dans la description de structures anatomiques et l'identification d'anomalies potentielles à partir de radios ou de scanners.
+
 ### 📸 [PhotoAnalyzer](./photoanalyzer/)
 PhotoAnalyzer est un outil CLI Python avancé pour l'analyse d'images utilisant l'API LLMaaS avec des modèles multimodaux. Il offre une interface utilisateur soignée avec modes debug, formats de sortie multiples, et support de différents types de prompts d'analyse spécialisés.
 
@@ -166,13 +212,16 @@ Démonstrateur RAG pédagogique pour illustrer le fonctionnement du Retrieval-Au
 Démonstrateur RAG complet et conteneurisé utilisant Qdrant comme base de données vectorielle. L'API LLMaaS est utilisée pour l'embedding des documents et la génération de réponses augmentées.
 
 ### 📝 [List Models](./list_models/)
-Script simple pour lister tous les modèles disponibles via l'API LLMaaS avec leurs détails, spécifications et statuts.
+Script avancé pour lister tous les modèles disponibles via l'API LLMaaS avec leurs détails, spécifications et statuts. Le script inclut une catégorisation fonctionnelle des modèles (Langage Généraliste, Embedding, Vision, OCR, etc.) pour faciliter leur sélection selon l'usage prévu.
 
 ### 🚀 [Streaming Demo](./streaming-demo/)
 Exemple minimal pour démontrer le streaming en temps réel avec l'API LLMaaS. Montre l'activation du streaming SSE (Server-Sent Events), l'affichage token par token, et le calcul des métriques de performance.
 
 ### 💬 [Mini Chat](./mini-chat/)
-Client de chat en ligne de commande interactif et avancé. Il supporte non seulement les conversations standards avec les modèles LLM, mais intègre également un **système RAG complet** via Qdrant et **23 outils intégrés** (calculatrice, shell, gestion de fichiers, etc.). Idéal pour des cas d'usage complexes nécessitant à la fois conversation et exécution de tâches.
+Client de chat en ligne de commande interactif (v3.0) refondu pour une stabilité maximale. Il supporte non seulement les conversations standards avec les modèles LLM, mais intègre également un **système RAG complet** via Qdrant et **des outils intégrés** (calculatrice, shell, gestion de fichiers, etc.). Cette nouvelle version offre une architecture modulaire et une gestion robuste des tool calls en streaming.
+
+### 📊 [Status API Demo](./status_api_demo/)
+Script de démonstration pour l'API publique de statut de la plateforme. Il permet de surveiller l'état de santé global de LLMaaS, de récupérer les métriques de performance en temps réel (TTFB, débit) et d'estimer précisément la consommation énergétique des requêtes par modèle.
 
 ### 🧪 [Test API Models](./test_api_models/)
 Script Python pour tester et comparer des modèles LLM via API avec configuration externe, découverte dynamique, sélection de modèles, gestion d'erreurs et résumé des performances.
@@ -188,6 +237,14 @@ Script Python pour traduire des fichiers texte par segments, utilisant un modèl
 
 ### 🎵 [Transkryptor](./transkryptor/)
 Outil CLI Python avancé pour la transcription de fichiers audio volumineux, utilisant le découpage intelligent, le traitement par lots parallèles, la normalisation audio et une interface utilisateur soignée.
+
+### 🐣 [Exemples Pédagogiques (Simples)](./)
+Série d'exemples minimalistes conçus pour apprendre à utiliser les fonctions de base de l'API :
+- **[Simple RAG Demo](./simple_rag_demo/)** : Les bases du RAG avec vecteurs en mémoire.
+- **[Simple Tool Calling](./simple_tool_calling/)** : Comment connecter le LLM à une fonction Python (calculatrice).
+- **[Simple Vision](./simple_vision/)** : Analyse d'image basique avec des modèles multimodaux.
+- **[Simple TTS](./simple_tts/)** : Synthèse vocale rapide et lecture audio.
+- **[Simple Translate](./simple_translate/)** : Traduction de texte optimisée avec TranslateGemma.
 
 ## Configuration
 

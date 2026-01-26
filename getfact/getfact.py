@@ -16,8 +16,8 @@ Le résultat est sauvegardé au format JSON ou YAML avec une structure organisé
 - Validation JSON robuste
 
 Auteur: Cloud Temple - LLMaaS Team
-Version: 1.0.0
-Date: 2025-06-04
+Version: 1.0.1
+Date: 2026-01-25
 """
 import argparse
 import os
@@ -56,13 +56,13 @@ COLORS = {
 }
 
 # 📋 Version du script
-SCRIPT_VERSION = "1.0.0"
+SCRIPT_VERSION = "1.0.1"
 
 # ⚙️ Configuration par défaut pour les paramètres du script
 DEFAULT_MODEL = "qwen3:14b" 
 DEFAULT_API_URL = "https://api.ai.cloud-temple.com/v1" 
 DEFAULT_CHUNK_SIZE_WORDS = 500 
-DEFAULT_MAX_TOKENS = 4096 
+DEFAULT_MAX_TOKENS = 16384  # 16k par défaut pour réduire le risque de réponses tronquées (finish_reason=length)
 
 # 🎨 Initialisation de la console Rich pour un affichage amélioré
 console = Console(force_terminal=True, color_system="auto")
@@ -431,6 +431,12 @@ Extrayez les informations selon ces catégories :"""
             base_prompt += "\n- SPATIAL: Localisations, positions relatives, géographie"
 
     base_prompt += """\n
+IMPORTANT :
+- Répondez UNIQUEMENT avec du JSON valide (pas de Markdown, pas de balises ```json ... ```).
+- Évitez les contenus verbeux qui risquent de tronquer la réponse.
+- Limitez-vous aux faits les plus importants (≈ 25 faits max). Si vous en détectez davantage, regroupez/synthétisez.
+- Les champs `source_text` et `context` doivent être courts (≈ 200 caractères max chacun).
+
 Formatez votre réponse en JSON valide avec cette structure :
 {
   "facts": [
@@ -479,6 +485,38 @@ Utilisez cette ontologie pour :
     base_prompt += "\n\nSoyez précis, exhaustif et maintenez une structure JSON valide."
     
     return base_prompt
+
+
+def _strip_markdown_code_fences(text: str) -> str:
+    """Supprime les balises de code Markdown (```json ... ```) si présentes."""
+    if not text:
+        return text
+    # Retirer un éventuel fence d'ouverture (```json / ```)
+    text = re.sub(r"^```(?:json)?\s*\n", "", text.strip(), flags=re.IGNORECASE)
+    # Retirer un éventuel fence de fermeture
+    text = re.sub(r"\n```\s*$", "", text.strip())
+    return text.strip()
+
+
+def _parse_first_json_object_from_text(content: str, chunk_index: int, debug_mode: bool = False):
+    """Nettoie le contenu LLM et tente d'en extraire le premier objet JSON valide."""
+    original_content = content or ""
+    processed_content = re.sub(r"<think>.*?</think>", "", original_content, flags=re.DOTALL).strip()
+    processed_content = _strip_markdown_code_fences(processed_content)
+
+    json_start_index = processed_content.find('{')
+    if json_start_index == -1:
+        console.print(
+            f"[{COLORS['warning']}]⚠️ Attention: Aucun JSON détecté après nettoyage pour le chunk {chunk_index}.[/{COLORS['warning']}]"
+        )
+        if debug_mode:
+            debug_print(f"❌ Contenu non-JSON reçu chunk {chunk_index}", {"contenu_original": original_content})
+        return None
+
+    json_to_decode = processed_content[json_start_index:]
+    decoder = json.JSONDecoder()
+    facts_data, _ = decoder.raw_decode(json_to_decode)
+    return facts_data
 
 async def extract_facts_from_chunk(api_url, api_key, model, system_prompt, chunk_text, chunk_index, max_tokens_response=2048, debug_mode=False):
     """
@@ -548,7 +586,12 @@ async def extract_facts_from_chunk(api_url, api_key, model, system_prompt, chunk
             response_data = response.json()
             
             if response_data.get("choices") and response_data["choices"]:
-                content = response_data["choices"][0].get("message", {}).get("content", "")
+                choice0 = response_data["choices"][0]
+                finish_reason = choice0.get("finish_reason")
+                content = choice0.get("message", {}).get("content", "")
+
+                if debug_mode:
+                    debug_print(f"ℹ️ finish_reason chunk {chunk_index}", {"finish_reason": finish_reason})
                 if content:
                     if debug_mode:
                         debug_print(f"📄 Contenu brut COMPLET reçu chunk {chunk_index}", {
@@ -558,39 +601,89 @@ async def extract_facts_from_chunk(api_url, api_key, model, system_prompt, chunk
                     
                     # 🧹 Nettoyage et parsing du JSON
                     try:
-                        original_content = content
-                        
-                        # 1. Supprimer les blocs <think> pour ne pas interférer avec la recherche de JSON
-                        processed_content = re.sub(r"<think>.*?</think>", "", original_content, flags=re.DOTALL).strip()
-                        
-                        # 2. Trouver le début du premier objet JSON
-                        json_start_index = processed_content.find('{')
-                        if json_start_index == -1:
-                            console.print(f"[{COLORS['warning']}]⚠️ Attention: Aucun JSON détecté après nettoyage pour le chunk {chunk_index}.[/{COLORS['warning']}]")
-                            if debug_mode:
-                                debug_print(f"❌ Contenu non-JSON reçu chunk {chunk_index}", {"contenu_original": original_content})
-                            return None
+                        facts_data = _parse_first_json_object_from_text(content, chunk_index, debug_mode)
 
-                        # 3. Utiliser raw_decode pour parser le premier objet JSON valide et ignorer le reste
-                        json_to_decode = processed_content[json_start_index:]
-                        decoder = json.JSONDecoder()
-                        facts_data, _ = decoder.raw_decode(json_to_decode)
-                        
                         if debug_mode:
                             debug_print(f"✅ JSON parsé avec succès via raw_decode pour le chunk {chunk_index}")
-                        
                         return facts_data
-                        
+
                     except json.JSONDecodeError as e:
-                        console.print(f"[{COLORS['warning']}]⚠️ Attention: Réponse JSON invalide pour le chunk {chunk_index}: {e}[/{COLORS['warning']}]")
+                        console.print(
+                            f"[{COLORS['warning']}]⚠️ Attention: Réponse JSON invalide pour le chunk {chunk_index}: {e}[/{COLORS['warning']}]"
+                        )
+
+                        # Diagnostic principal: sortie tronquée
+                        if finish_reason == "length" and max_tokens_response <= 4096:
+                            console.print(
+                                f"[{COLORS['warning']}]⚠️ La réponse du modèle semble tronquée (finish_reason=length). "
+                                f"Je vais relancer une tentative plus concise pour le chunk {chunk_index}.[/{COLORS['warning']}]"
+                            )
+
+                            retry_system_prompt = system_prompt + (
+                                "\n\nRAPPEL: Réponds UNIQUEMENT avec du JSON valide, sans balises Markdown. "
+                                "Sois plus concis: ~15 faits max, `source_text` <= 120 caractères, `context` optionnel et court."
+                            )
+
+                            retry_messages = [
+                                {"role": "system", "content": retry_system_prompt},
+                                {
+                                    "role": "user",
+                                    "content": (
+                                        "Ta réponse précédente a été tronquée. "
+                                        "Renvoie UNIQUEMENT un JSON valide et COMPLET pour le même texte, de manière plus concise :\n\n"
+                                        + chunk_text
+                                    ),
+                                },
+                            ]
+
+                            retry_payload = {
+                                "model": model,
+                                "messages": retry_messages,
+                                "max_tokens": max_tokens_response,
+                                "stream": False,
+                                "temperature": 0.0,
+                            }
+
+                            async with httpx.AsyncClient(timeout=120.0) as retry_client:
+                                retry_resp = await retry_client.post(
+                                    f"{api_url}/chat/completions", json=retry_payload, headers=headers
+                                )
+                                retry_resp.raise_for_status()
+                                retry_data = retry_resp.json()
+                                retry_choice0 = (retry_data.get("choices") or [{}])[0]
+                                retry_content = retry_choice0.get("message", {}).get("content", "")
+
+                                if debug_mode:
+                                    debug_print(
+                                        f"ℹ️ finish_reason retry chunk {chunk_index}",
+                                        {"finish_reason": retry_choice0.get("finish_reason")},
+                                    )
+
+                                if retry_content:
+                                    try:
+                                        facts_data = _parse_first_json_object_from_text(
+                                            retry_content, chunk_index, debug_mode
+                                        )
+                                        console.print(
+                                            f"[{COLORS['success']}]✅ Chunk {chunk_index}: JSON valide obtenu après retry concis.[/{COLORS['success']}]"
+                                        )
+                                        return facts_data
+                                    except json.JSONDecodeError as e2:
+                                        console.print(
+                                            f"[{COLORS['warning']}]⚠️ Retry chunk {chunk_index} encore invalide: {e2}[/{COLORS['warning']}]"
+                                        )
+
                         if "Unterminated string" in str(e):
-                            console.print(f"[{COLORS['info']}]💡 Conseil: Cette erreur est souvent due à une réponse tronquée. Essayez d'augmenter la valeur de --max-tokens.[/{COLORS['info']}]")
-                        
+                            console.print(
+                                f"[{COLORS['info']}]💡 Conseil: cette erreur est souvent due à une réponse tronquée. "
+                                f"Essayez aussi de réduire --chunk-size-words (ex: 250) ou d'utiliser un modèle plus concis.[/{COLORS['info']}]"
+                            )
+
                         if debug_mode:
-                            debug_print(f"❌ Échec parsing JSON chunk {chunk_index}", {
-                                "erreur": str(e),
-                                "contenu_complet_original": original_content
-                            })
+                            debug_print(
+                                f"❌ Échec parsing JSON chunk {chunk_index}",
+                                {"erreur": str(e), "contenu_complet_original": content},
+                            )
                         return None
             else:
                 console.print(f"[{COLORS['error']}]🚫 Réponse API invalide pour le chunk {chunk_index}: 'choices' manquantes[/{COLORS['error']}]")
@@ -622,6 +715,9 @@ def merge_fact_extractions(chunk_extractions, debug_mode=False):
     for chunk_idx, extraction in enumerate(chunk_extractions):
         if not extraction:
             continue
+
+        # Map des IDs d'origine -> nouveaux IDs (pour recâbler les relations)
+        id_map = {}
             
         # Traitement des faits
         facts = extraction.get("facts", [])
@@ -631,6 +727,8 @@ def merge_fact_extractions(chunk_extractions, debug_mode=False):
             new_id = f"fact_{fact_id_counter}"
             fact["id"] = new_id
             fact["chunk_source"] = chunk_idx + 1
+
+            id_map[original_id] = new_id
             
             merged_facts.append(fact)
             
@@ -649,6 +747,15 @@ def merge_fact_extractions(chunk_extractions, debug_mode=False):
         for rel in relationships:
             rel["id"] = f"rel_{rel_id_counter}"
             rel["chunk_source"] = chunk_idx + 1
+
+            # Recâbler les IDs de faits si possible
+            src = rel.get("source_fact_id")
+            tgt = rel.get("target_fact_id")
+            if src in id_map:
+                rel["source_fact_id"] = id_map[src]
+            if tgt in id_map:
+                rel["target_fact_id"] = id_map[tgt]
+
             merged_relationships.append(rel)
             rel_id_counter += 1
 

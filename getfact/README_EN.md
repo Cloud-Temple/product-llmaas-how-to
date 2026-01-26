@@ -19,16 +19,16 @@ This script automatically extracts facts and relationships between facts from a 
 
 ## 🧠 Specialized Ontologies
 
-GetFact includes 6 ready-to-use business ontologies for optimized contextual extraction:
+GetFact includes 6 ready-to-use business ontologies for optimized contextual extraction. These files are located in the `ontologies/` folder.
 
-| Ontology | Domain | File | Usage |
+| Ontology | Domain | File | Description & Usage |
 |---|---|---|---|
-| 🏛️ **Legal** | Law, litigation, compliance | `ontologie_droit.yaml` | Contracts, judgments, compliance |
-| 👥 **HR** | Human Resources, HRIS | `ontologie_rh.yaml` | CVs, interviews, mobility |
-| 💻 **Development** | DevOps, software engineering | `ontologie_developpement.yaml` | Code, architectures, metrics |
-| 🔒 **Security** | Cybersecurity, CISO | `ontologie_securite_logique.yaml` | Incidents, vulnerabilities, audits |
-| ☁️ **Infrastructure** | Cloud, datacenters, networks | `ontologie_infrastructure_cloud.yaml` | Servers, costs, performance |
-| 🤝 **IT Management** | Managed services, ITIL | `ontologie_infogerance.yaml` | SLAs, tickets, processes |
+| 🏛️ **Legal** | Law, litigation, compliance | `ontologie_droit.yaml` | **Entities**: Lawyers, Judges, Legal articles, Contracts.<br>**Relationships**: "violates", "stipulates that", "sues".<br>**Usage**: Analysis of contracts, judgments, and compliance documents. |
+| 👥 **HR** | Human Resources, HRIS | `ontologie_rh.yaml` | **Entities**: Candidates, Positions, Skills, Degrees.<br>**Relationships**: "has skill", "worked at", "applies for".<br>**Usage**: Analysis of CVs, interview reports, career plans. |
+| 💻 **Development** | DevOps, software engineering | `ontologie_developpement.yaml` | **Entities**: Languages, Frameworks, Bugs, Features, PR.<br>**Relationships**: "depends on", "fixes", "implements".<br>**Usage**: Analysis of technical documentation, Jira tickets, code reviews. |
+| 🔒 **Security** | Cybersecurity, CISO | `ontologie_securite_logique.yaml` | **Entities**: Threats, Vulnerabilities (CVE), Assets, Attackers.<br>**Relationships**: "exploites", "mitigates", "affects".<br>**Usage**: Incident reports, security audits, threat analysis. |
+| ☁️ **Infrastructure** | Cloud, datacenters, networks | `ontologie_infrastructure_cloud.yaml` | **Entities**: VMs, Containers, VPCs, Load Balancers.<br>**Relationships**: "hosted on", "connected to", "protected by".<br>**Usage**: Inventory reports, architecture documents, infrastructure logs. |
+| 🤝 **IT Management** | Managed services, ITIL | `ontologie_infogerance.yaml` | **Entities**: SLAs, Tickets, Incidents, Changes.<br>**Relationships**: "resolved by", "escalated to", "impacts".<br>**Usage**: Service quality monitoring, activity reports, incident management. |
 
 ### Usage Examples by Domain
 
@@ -304,9 +304,9 @@ python getfact.py --file documentation.md --output-format yaml --chunk-size-word
 
 | Document Size | chunk-size-words | max-tokens | Model |
 |---|---|---|---|
-| < 1000 words | 500 | 2048 | granite3:8b |
-| 1000-5000 words | 400 | 3072 | qwen3:14b |
-| > 5000 words | 300 | 4096 | qwen3:14b |
+| < 1000 words | 500 | 4096 | granite3:8b |
+| 1000-5000 words | 400 | 8192 | qwen3:14b |
+| > 5000 words | 300 | 16384 | qwen3:14b |
 
 ### Optimization Tips
 - **Ontology**: Use a specialized ontology for your domain.

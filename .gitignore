@@ -4,6 +4,8 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.clinerules/
+memory-bank/
 
 # Fichiers de configuration contenant des clés API
 config.json

@@ -76,7 +76,7 @@ def process_pil_image(img, source_name="Image"):
 
         # Sauvegarde de l'image en mémoire (buffer) au format JPEG
         buffer = io.BytesIO()
-        img.save(buffer, format="JPEG", quality=95) # Qualité 95 pour minimiser les artefacts
+        img.save(buffer, format="JPEG", quality=95)  # Qualité 95 pour minimiser les artefacts
         
         # Encodage du buffer binaire en chaîne base64 (format requis par l'API)
         return base64.b64encode(buffer.getvalue()).decode('utf-8')
@@ -130,11 +130,11 @@ def process_pdf_stream(pdf_data, source_name="PDF"):
             # Le zoom 2.0 correspond approximativement à 144 DPI (72 * 2),
             # ce qui offre une résolution suffisante pour l'OCR de petits caractères
             # sans générer des images excessivement lourdes.
-            pix = page.get_pixmap(matrix=fitz.Matrix(2.0, 2.0))
+            pix = page.get_pixmap(dpi=144)
             
             # Conversion du Pixmap PyMuPDF en image Pillow (PIL)
             # pix.samples contient les octets bruts RGB
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
             
             # Traitement de l'image (RGB, Resize, Base64)
             b64 = process_pil_image(img, source_name=f"Page {i+1}")
@@ -167,8 +167,8 @@ def get_image_sources(image_source):
         if image_source.lower().endswith('.pdf'):
             try:
                 console.print(f"[dim]Téléchargement du PDF distant : {image_source}[/dim]")
-                response = requests.get(image_source)
-                response.raise_for_status() # Vérifie les erreurs HTTP (404, 500...)
+                response = requests.get(image_source, timeout=30)
+                response.raise_for_status()  # Vérifie les erreurs HTTP (404, 500...)
                 
                 # Conversion du PDF téléchargé (en mémoire) en images
                 base64_images = process_pdf_stream(response.content, source_name="PDF Distant")
@@ -295,8 +295,8 @@ def main():
                 response = client.chat.completions.create(
                     model="deepseek-ai/DeepSeek-OCR",
                     messages=messages,
-                    max_tokens=4096, # Limite de génération pour une page
-                    temperature=0.0, # Température 0 pour une extraction déterministe et fidèle
+                    max_tokens=4096,  # Limite de génération pour une page
+                    temperature=0.0,  # Température 0 pour une extraction déterministe et fidèle
                 )
             
             duration = time.time() - start_time

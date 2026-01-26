@@ -26,7 +26,7 @@ from image_utils import load_and_validate_image, encode_image_to_base64, get_ima
 # --- Configuration par défaut ---
 DEFAULT_CONFIG_FILENAME = "config.json"
 DEFAULT_OUTPUT_DIR = "./photoanalyzer_outputs"
-DEFAULT_MODEL = "qwen2.5vl:7b"
+DEFAULT_MODEL = "qwen3-vl:8b" # Modèle multimodal par défaut
 DEFAULT_MAX_TOKENS = 1000
 DEFAULT_TEMPERATURE = 0.3
 DEFAULT_TIMEOUT = 120
@@ -264,10 +264,10 @@ def run_image_analysis_pipeline(args):
         print_message("Erreur: Les dimensions largeur et hauteur doivent être spécifiées ensemble ou pas du tout.", style="error", silent=silent_mode, debug_mode=debug_mode)
         return
     
-    # Pour Qwen2.5-VL, pas besoin de dimensions spécifiques - utiliser résolution native par défaut
+    # Pour Qwen-VL, pas besoin de dimensions spécifiques - utiliser résolution native par défaut
     if resized_width is None and resized_height is None:
-        # Laisser Qwen2.5-VL utiliser la résolution native de l'image
-        print_message("Utilisation de la résolution native de l'image (recommandé pour Qwen2.5-VL).", style="info", silent=silent_mode, debug_mode=debug_mode)
+        # Laisser Qwen-VL utiliser la résolution native de l'image
+        print_message("Utilisation de la résolution native de l'image (recommandé pour Qwen-VL).", style="info", silent=silent_mode, debug_mode=debug_mode)
         resized_width = None
         resized_height = None
     else:
@@ -380,7 +380,7 @@ if __name__ == '__main__':
         epilog=f"""{TermColors.OKGREEN}{TermColors.BOLD}Exemples d'utilisation:{TermColors.ENDC}
   {TermColors.OKCYAN}python photoanalyzer.py image.jpg{TermColors.ENDC}
   {TermColors.OKCYAN}python photoanalyzer.py photo.png -o description.txt --debug{TermColors.ENDC}
-  {TermColors.OKCYAN}python photoanalyzer.py image.jpg -t people -m "qwen2.5-vl:7b"{TermColors.ENDC}
+  {TermColors.OKCYAN}python photoanalyzer.py image.jpg -t people -m "qwen3-vl:8b"{TermColors.ENDC}
   {TermColors.OKCYAN}python photoanalyzer.py screenshot.png -p "Analyse ce contenu technique"{TermColors.ENDC}
   {TermColors.OKCYAN}python photoanalyzer.py photo.jpg --silent > description.txt{TermColors.ENDC}"""
     )

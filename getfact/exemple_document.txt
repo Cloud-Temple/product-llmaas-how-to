@@ -11,15 +11,16 @@ Le projet est supervisé par Sophie Durand, directrice technique de Cloud Temple
 Le service LLMaaS utilise une infrastructure moderne composée de :
 
 ### Serveurs de Calcul
-- 4 serveurs Cisco UCSX-210C-M7 équipés de GPU NVIDIA L40S (ia01 à ia04)
+- 4 serveurs avec GPU NVIDIA L40S (ia01 à ia04)
 - 2 serveurs avec GPU NVIDIA A100 pour les modèles standards (ia05, ia06)
-- 7 Mac Mini M4 et Mac Studio M4 pour les modèles légers (ai-mac-01 à ai-mac-07)
+- 10 serveurs avec GPU NVIDIA Blackwell (ia07 à ia17) 
+- 2 serveurs avec GPU AMD Radeon Pro (ia18 et ia19)
+- 9 serveurs Apple silicones pour les modèles légers (ai-mac-01 à ai-mac-09)
 
 ### Modèles Déployés
 Le catalogue actuel inclut plusieurs modèles performants :
 - Qwen 3 (14B paramètres) : modèle principal pour usage général
-- Granite 3.3 (8B paramètres) : optimisé pour le raisonnement
-- DeepSeek R1 (7B paramètres) : spécialisé en analyse complexe
+- gpt-oss (120B paramètres) : spécialisé en analyse complexe
 - Gemma 3 (27B paramètres) : excellent pour le traitement multimodal
 
 ### Réseau et Sécurité

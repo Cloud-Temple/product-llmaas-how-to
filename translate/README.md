@@ -1,76 +1,86 @@
-# Exemple de Script de Traduction de Fichiers
+# Traducteur de Documents Intelligent (LLMaaS)
 
-📖 **Documentation complète** : [docs.cloud-temple.com](https://docs.cloud-temple.com)
+Ce script Python permet de traduire des documents texte de n'importe quelle taille en utilisant l'API LLMaaS de Cloud Temple.
 
-Cet exemple fournit un script Python (`translate.py`) permettant de traduire le contenu d'un fichier texte d'une langue source vers une langue cible en utilisant l'**API LLMaaS Cloud Temple**.
+## Fonctionnalités Clés
 
-## Objectif
+-   **Support de tous les modèles** : Compatible avec Qwen, Mistral, Llama, et spécifiquement optimisé pour **TranslateGemma**.
+-   **Découpage Intelligent (Chunking)** : Gère les documents dépassant la fenêtre de contexte du modèle en les découpant intelligemment par paragraphes, sans couper les phrases.
+-   **Contexte Glissant** : Maintient la cohérence de la traduction (style, terminologie) entre les segments.
+-   **Mode Interactif** : Permet de valider ou corriger la traduction segment par segment.
+-   **Robuste** : Gestion des erreurs API et sauvegarde automatique.
 
-L'objectif principal est de démontrer comment :
-1.  Interagir avec l'API LLMaaS pour des tâches de traduction.
-2.  Traiter un fichier texte par segments (chunks) pour gérer de longs documents.
-3.  Maintenir la cohérence de la traduction en passant le segment précédemment traduit comme contexte au modèle.
-4.  Offrir une interface en ligne de commande flexible pour spécifier le fichier, la langue cible, le modèle, et d'autres paramètres.
-5.  Proposer un mode interactif pour valider ou ajuster la traduction au fur et à mesure.
+## Prérequis
 
-## Fonctionnalités
-
--   Sélection du fichier à traduire via l'option `--file`.
--   Spécification de la langue cible en utilisant les codes ISO 639-1 (ex: `en`, `fr`) via `--target-language`.
--   Option `--list-languages` pour afficher les codes de langues courants.
--   Choix du modèle LLM à utiliser (`--model`).
--   Configuration du prompt système (`--system-prompt`), du nombre maximal de tokens par chunk (`--max-tokens`), de la taille des chunks en mots (`--chunk-size-words`), et du répertoire de sortie (`--output-dir`).
--   **Configuration par défaut via fichier `.env`** : La plupart des options (modèle, URL API, langue cible, max tokens, taille des chunks, prompt système, répertoire de sortie) peuvent être définies par défaut dans un fichier `.env`. Voir `.env.example`.
--   Traduction par "chunks" (segments de texte) avec passage du contexte du chunk précédent pour améliorer la cohérence.
--   **Découpage intelligent des chunks** : Tente d'agréger les petits paragraphes et de respecter les frontières naturelles du texte, tout en s'assurant que les chunks ne dépassent pas la taille configurée.
--   Mode interactif optionnel (`--interactive`) pour valider la traduction de chaque chunk (la modification n'est pas encore implémentée).
--   Sauvegarde du texte traduit dans un nouveau fichier dans le répertoire de sortie.
--   **Affichage de la progression amélioré** : Utilisation d'une barre de progression `rich` détaillée pendant la traduction, incluant un aperçu du chunk en cours.
--   Option de débogage (`--debug`) pour visualiser le processus de découpage des chunks.
+-   Python 3.7+
+-   Une clé API LLMaaS Cloud Temple
 
 ## Installation
 
-```bash
-# Cloner le dépôt (si ce n'est pas déjà fait)
-# git clone ...
-# cd llmaas/exemples/translate
+1.  Installez les dépendances :
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-# Créer un environnement virtuel (recommandé)
-python -m venv .venv
-source .venv/bin/activate # Sur Linux/macOS
-# .venv\Scripts\activate # Sur Windows
-
-# Installer les dépendances
-pip install -r requirements.txt
-
-# Configurer les variables d'environnement
-# Copier exemples/translate/.env.example vers exemples/translate/.env
-# et y renseigner au minimum LLMAAS_API_KEY.
-# Vous pouvez aussi y définir des valeurs par défaut pour le modèle, la langue cible, etc.
-# cp .env.example .env
-# nano .env
-```
+2.  Configurez votre clé API (optionnel, peut être passée en ligne de commande) :
+    ```bash
+    cp .env.example .env
+    # Éditez .env pour y mettre votre clé API
+    ```
 
 ## Utilisation
 
-Pour afficher l'aide complète :
+### Exemples de données
+
+Un fichier texte d'exemple est fourni dans `data/example_text_en.txt`. Il contient un texte structuré sur l'Intelligence Artificielle et le RAG, idéal pour tester le chunking.
+
+### Traduction Standard
+
+Pour traduire un fichier en utilisant un modèle généraliste (ex: Qwen, Mistral) :
+
 ```bash
-python translate.py --help
+python translate.py --file data/example_text_en.txt --target-language fr --model qwen3:14b
 ```
 
-Pour lister les codes de langues courants :
+### Utilisation avec TranslateGemma
+
+TranslateGemma nécessite un format de prompt spécifique. Le script le détecte automatiquement si le nom du modèle contient "translategemma", ou vous pouvez le forcer.
+**Note :** Pour TranslateGemma, il est recommandé de spécifier la langue source.
+
 ```bash
-python translate.py --list-languages
+python translate.py \
+  --file data/example_text_en.txt \
+  --model translategemma:27b \
+  --source-language en \
+  --target-language fr
 ```
 
-Exemple de traduction d'un fichier en anglais :
-```bash
-python translate.py --file chemin/vers/mon_fichier_source.txt --target-language en
-```
+### Options Disponibles
 
-Exemple avec le mode interactif et débogage du découpage :
-```bash
-python translate.py --file mon_document.txt --target-language fr --interactive --debug
-```
+| Argument | Description | Défaut |
+| :--- | :--- | :--- |
+| `--file` | Chemin du fichier à traduire (requis). | - |
+| `--target-language` | Code ISO de la langue cible (ex: `fr`, `es`). | - |
+| `--source-language` | Code ISO de la langue source (ex: `en`). Requis pour TranslateGemma. | `en` |
+| `--model` | Nom du modèle LLM à utiliser. | `qwen3:14b` |
+| `--prompt-format` | Format du prompt : `auto` (détection), `standard` (chat), `translategemma`. | `auto` |
+| `--chunk-size-words` | Taille cible des segments en mots. | `300` |
+| `--max-tokens` | Limite de tokens pour la réponse (traduction). | `2048` |
+| `--interactive` | Active le mode interactif pour valider chaque chunk. | `False` |
+| `--list-languages` | Affiche la liste des 55+ langues supportées. | - |
+| `--debug` | Affiche des détails sur le découpage du texte. | `False` |
 
-Le fichier traduit sera sauvegardé par défaut dans le sous-répertoire `translated_files/` (configurable via `--output-dir` ou `LLMAAS_OUTPUT_DIR` dans `.env`).
+### Exemple de Chunking
+
+Pour voir comment le script découpe votre texte sans lancer la traduction (mode debug), utilisez un modèle factice ou coupez le réseau, ou utilisez simplement l'option `--debug` avec un petit fichier.
+
+Le script essaie de :
+1.  Couper aux doubles sauts de ligne (paragraphes).
+2.  Regrouper les paragraphes pour approcher `chunk_size_words`.
+3.  Si un paragraphe est trop gros, il le coupe proprement aux espaces.
+
+## Dépannage
+
+-   **Erreur 401** : Vérifiez votre clé API.
+-   **Erreur 429** : Vous dépassez les quotas de débit. Le script ne gère pas le "backoff" automatique complexe, relancez plus tard.
+-   **Traduction coupée** : Augmentez `--max-tokens` ou réduisez `--chunk-size-words`.

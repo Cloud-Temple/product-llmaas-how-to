@@ -1,6 +1,14 @@
-# Mini-Chat LLMaaS
+# Mini-Chat LLMaaS v3.0
 
-An elegant command-line interface to interact with the LLMaaS platform's language models, with full support for RAG (Retrieval-Augmented Generation).
+A modern, robust, and modular command-line interface (CLI) chat for interacting with LLMaaS models. This v3.0 release has been completely re-architected to offer better stability, easier maintenance, and an enriched user experience.
+
+## 🌟 What's New in v3.0
+
+- **Modular Architecture**: Clear separation between configuration, state, business logic, and user interface.
+- **Enhanced Robustness**: Centralized error management, strict typing, and input validation.
+- **Simplified RAG**: Seamless integration of embedding and vector search with Qdrant.
+- **Improved Tool Support**: Reliable execution of tools (calculator, time, files, etc.) even in streaming mode.
+- **Default Model**: Uses `openai/gpt-oss-120b` for optimal performance.
 
 ## 🚀 Quick Start
 
@@ -21,348 +29,94 @@ pip install -r requirements.txt
 
 ### 2. Configuration
 
-```bash
-# Copy the configuration file
-cp .env.example .env
+Copy the example file and configure your API key:
 
-# Edit .env with your settings
-nano .env
+```bash
+cp .env.example .env
+# Edit .env with your LLMaaS API key
 ```
 
-**Minimum configuration**:
+**Minimum Configuration (.env)**:
 ```env
 API_URL="https://api.ai.cloud-temple.com/v1"
 API_KEY="your_api_key_here"
-DEFAULT_MODEL="qwen3:30b-a3b"
+DEFAULT_MODEL="openai/gpt-oss-120b"
 ```
 
-### 3. Starting Qdrant (for RAG)
+### 3. Starting Qdrant (Optional - For RAG)
 
-**Option A: Docker (recommended)**
+To enable long-term memory and document search:
+
 ```bash
-# Simple start
 docker run -p 6333:6333 qdrant/qdrant
-
-# Or with data persistence
-docker run -p 6333:6333 -v $(pwd)/qdrant_storage:/qdrant/storage qdrant/qdrant
 ```
 
-**Option B: Docker Compose**
-```bash
-# Use the provided file
-docker-compose up -d
-```
-
-**Option C: Local Installation**
-```bash
-# Follow the instructions at https://qdrant.tech/documentation/quick-start/
-```
-
-### 4. First Launch
+### 4. Launch
 
 ```bash
-# Simple launch
+# Standard interactive mode
 python mini_chat.py
 
 # With a specific model
-python mini_chat.py --model qwen3:4b
+python mini_chat.py --model gemma3:27b
 
-# Debug mode to see details
-python mini_chat.py --debug
+# "One-Shot" mode (single command)
+python mini_chat.py --non-interactive --prompt "Explain special relativity in 3 sentences."
 ```
 
-## 🎯 Main Features
+## 🎮 Interactive Commands
 
-### 💬 Smart Chat
-- **Real-time streaming**: Responses are displayed as they are generated
-- **Persistent history**: Navigate with ↑/↓ arrows
-- **Autocompletion**: 23 commands with Tab
-- **Flexible modes**: Debug, silent, non-interactive
+Once in the chat, use slash `/` commands to control the application:
 
-### 🛠️ Integrated Tools
-- **🕒 Clock**: Current time
-- **🧮 Calculator**: Mathematical expressions
-- **📁 Files**: Read and save
-- **⚡ Shell**: Execute commands (with confirmation)
-- **🔍 RAG**: Search in a vector knowledge base
+| Command | Description |
+|----------|-------------|
+| `/rag on|off` | Enable or disable RAG (Vector Search) mode. |
+| `/embed <file>` | Read, chunk, and index a text file into the vector database. |
+| `/history` | Display the full history of the current session. |
+| `/clear` | Clear conversation history (keeps system prompt). |
+| `/quit` | Quit the application. |
 
-### 🧠 RAG (Retrieval-Augmented Generation)
-- **Automatic ingestion**: `/embed` command to add documents
-- **Intelligent search**: Configurable similarity thresholds
-- **Flexible activation**: Automatic or manual mode
-- **Complete diagnostics**: Management and monitoring of the Qdrant database
+## 🧠 Advanced Features (RAG)
 
-## 📋 User Guide
+The RAG (Retrieval-Augmented Generation) system allows the model to access your own documents.
 
-### RAG Configuration
+1.  **Indexing**:
+    ```text
+    /embed constitution.txt
+    ```
+    *The system chunks the file, computes embeddings, and stores them in Qdrant.*
 
-1. **Start Qdrant** (see Quick Start section)
+2.  **Activation**:
+    ```text
+    /rag on
+    ```
 
-2. **Configure .env**:
-```env
-# Qdrant settings
-QDRANT_URL="localhost"
-QDRANT_PORT=6333
-QDRANT_COLLECTION="minichat_rag"
-EMBEDDING_MODEL="granite-embedding:278m"
+3.  **Usage**:
+    Simply ask your question. If RAG is active, the system will first look for relevant passages in your documents and provide them to the model as context.
 
-# Chunking settings (in tokens)
-RAG_CHUNK_SIZE=256
-RAG_CHUNK_OVERLAP=50
-```
+## 🛠️ Integrated Tools (Tool Calling)
 
-3. **Ingest documents**:
-```bash
-# In the chat
-/embed constitution.txt
-```
+The model has access to several tools it can decide to use autonomously:
+- **Calculator**: For precise mathematical operations.
+- **Date/Time**: To know the current time.
+- **File System**: Read and write files (in the current directory).
+- **Shell**: Execute system commands (requires user validation).
 
-4. **Activate RAG**:
-```bash
-/rag on
-```
+## 🏗️ Technical Architecture
 
-### Essential Commands
+The code is organized for readability and maintainability:
 
-#### Session Management
-```bash
-/model                    # Change model
-/system <prompt>          # Set a system prompt
-/clear                    # Clear history
-/save_session chat.json   # Save the session
-/load_session chat.json   # Load a session
-```
-
-#### RAG and Documents
-```bash
-/embed <file>             # Ingest a document
-/rag on|off               # Enable/disable RAG
-/rag_threshold 0.8        # Configure similarity threshold
-/qdrant_info              # Information about the database
-/qdrant_list              # List documents
-```
-
-#### Diagnostics and Debug
-```bash
-/context                  # Application state
-/context all              # Full context + JSON
-/debug                    # Debug mode on/off
-/tools                    # List of available tools
-```
-
-## ⚙️ Command-Line Options
-
-### Main Options
-```bash
-python mini_chat.py [OPTIONS]
-
---model TEXT              # Model to use
---max-tokens INTEGER      # Token limit (default: 8192)
---temperature FLOAT       # Temperature (default: 0.7)
---system-prompt TEXT      # Initial system prompt
---debug / --no-debug      # Debug mode
-```
-
-### Advanced Options
-```bash
---api-url TEXT            # API URL (overrides .env)
---api-key TEXT            # API key (overrides .env)
---non-interactive         # Non-interactive mode
---no-stream               # Disable streaming
---silent                  # Silent mode
---godmode                 # No confirmation for shell commands
-```
-
-### RAG Options
-```bash
---qdrant-url TEXT         # Qdrant URL (default: localhost)
---qdrant-port INTEGER     # Qdrant port (default: 6333)
---qdrant-collection TEXT  # Collection (default: minichat_rag)
---embedding-model TEXT    # Embedding model
-```
-
-### Session Options
-```bash
---load-session FILE       # Load a session
---autosave-json FILE      # Auto-save in JSON
---autosave-md FILE        # Auto-save in Markdown
---rules FILE              # Markdown rules file
---prompt TEXT             # Initial prompt
-```
-
-## 🔧 Advanced Configuration
-
-### Complete .env File
-```env
-# LLMaaS API
-API_URL="https://api.ai.cloud-temple.com/v1"
-API_KEY="your_api_key_here"
-DEFAULT_MODEL="qwen3:30b-a3b"
-MAX_TOKENS=8192
-
-# Qdrant for RAG
-QDRANT_URL="localhost"
-QDRANT_PORT=6333
-QDRANT_COLLECTION="minichat_rag"
-EMBEDDING_MODEL="granite-embedding:278m"
-
-# Chunking settings (in tokens)
-RAG_CHUNK_SIZE=256
-RAG_CHUNK_OVERLAP=50
-```
-
-### Docker Compose for Qdrant
-```yaml
-version: '3.8'
-services:
-  qdrant:
-    image: qdrant/qdrant
-    ports:
-      - "6333:6333"
-    volumes:
-      - ./qdrant_storage:/qdrant/storage
-    environment:
-      - QDRANT__SERVICE__HTTP_PORT=6333
-```
-
-## 🧪 Tests and Validation
-
-### RAG Tool Test
-```bash
-# Unit test of the search tool
-python test_rag_tool.py
-
-# Test with a constitutional question
-echo "Who can dismiss the Prime Minister?" | python mini_chat.py --model qwen3:4b --non-interactive
-```
-
-### Installation Diagnostics
-```bash
-# Check the configuration
-python mini_chat.py --debug
-/context all
-
-# Test the Qdrant connection
-/qdrant_info
-```
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-**Qdrant not accessible**
-```bash
-# Check if Qdrant is running
-curl http://localhost:6333/health
-
-# Restart Qdrant
-docker restart <container_id>
-```
-
-**RAG not working**
-```bash
-# In the chat
-/qdrant_info              # Check the connection
-/rag_threshold 0.7        # Lower the threshold
-/context                  # Full diagnostics
-```
-
-**Context limit exceeded**
-```bash
-/context                  # See automatic diagnostics
-/smol                     # Condense history
-/clear                    # Clear history
-```
-
-**Model issues**
-```bash
-# List available models
-python mini_chat.py --model ""
-
-# Test with a smaller model
-python mini_chat.py --model qwen3:4b
-```
-
-## 📁 Project Structure
-
-```
-exemples/mini-chat/
-├── mini_chat.py              # Main entry point
-├── api_client.py             # LLMaaS API client
-├── qdrant_utils.py           # Qdrant utilities
-├── tools_definition.py       # Tool definitions
-├── ui_utils.py               # User interface
-├── session_manager.py        # Session management
-├── rag_core.py               # RAG functions
-├── command_handler.py        # Command handler
-├── requirements.txt          # Python dependencies
-├── .env.example              # Example configuration
-├── docker-compose.yml        # Qdrant configuration
-└── test_rag_tool.py          # Unit tests
-```
-
-## 🎯 Usage Examples
-
-### Simple Chat
-```bash
-python mini_chat.py --model qwen3:4b
-> Hello! How are you?
-```
-
-### RAG with Constitution
-```bash
-# 1. Start Qdrant
-docker run -p 6333:6333 qdrant/qdrant
-
-# 2. Launch mini-chat
-python mini_chat.py --model qwen3:30b-a3b
-
-# 3. Ingest the constitution
-/embed constitution.txt
-
-# 4. Activate RAG
-/rag on
-
-# 5. Ask a question
-> Who can dissolve the National Assembly according to the Constitution?
-```
-
-### Non-Interactive Mode
-```bash
-echo "Summarize articles 1 to 5 of the Constitution for me" | \
-python mini_chat.py --model qwen3:4b --non-interactive --no-stream
-```
-
-### Persistent Session
-```bash
-# Save
-python mini_chat.py --autosave-json my_session.json
-
-# Resume later
-python mini_chat.py --load-session my_session.json
-```
-
-## 🔄 Updates
-
-### Version 1.3.1 (Current)
-- ✅ **Critical bug fixed**: Vector search tool fully functional
-- ✅ **Robust type handling**: Universal support for JSON formats
-- ✅ **Validated tests**: 4/4 requests processed without error
-- ✅ **Complete documentation**: User guide and troubleshooting
-
-### Previous Features
-- 🎯 **Intelligent RAG** with configurable thresholds
-- 🔧 **Advanced diagnostics** for context issues
-- 🛠️ **23 commands** with autocompletion
-- 📊 **Complete Qdrant management** (listing, deletion, information)
+- **`mini_chat.py`**: Entry point. Contains the main loop (`MiniChatCLI`) and orchestration (`ChatService`).
+- **`api_client.py`**: Low-level API call management (streaming, chunk handling).
+- **`qdrant_utils.py`**: Interface with the vector database.
+- **`rag_core.py`**: Text chunking logic.
+- **`tools_definition.py`**: JSON schema definitions for tools.
 
 ## 📞 Support
 
-To report a bug or ask for help:
-1. Use `/context all` to get full diagnostics
-2. Consult the Troubleshooting section above
-3. Check the logs in `--debug` mode
+For any questions or issues, first verify that your API key is valid and that Qdrant is running (if using RAG).
 
----
-
-**Mini-Chat LLMaaS** - Intelligent chat interface with RAG for the LLMaaS platform
+You can also run the automated test script to validate your RAG configuration:
+```bash
+python test_rag_scenario.py
+```

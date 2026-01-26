@@ -1,15 +1,16 @@
-# Example: Listing LLMaaS Models with Style
+# Example: List LLMaaS Models with Style
 
-This Python script (`list_models.py`) is an elegant example for querying the `/v1/models` endpoint of the **Cloud Temple LLMaaS API** and displaying the list of available models in a well-formatted table using the `rich` library.
+This Python script (`list_models.py`) is an elegant example to query the `/v1/models` endpoint of the **Cloud Temple LLMaaS API** and display the list of available models in a well-formatted table using the `rich` library, with functional categorization of models.
 
 📖 **Full documentation**: [docs.cloud-temple.com](https://docs.cloud-temple.com)
 
 ## Features
 
-- Loading configuration (API URL and token) from a `.env` file.
-- Calling the LLMaaS API to retrieve the list of models.
-- Handling connection errors and HTTP responses.
-- Displaying models in a clear and colorful table, sorted by ID.
+- Load configuration (API URL and token) from a `.env` file.
+- Call the LLMaaS API to retrieve the list of models.
+- Handle connection errors and HTTP responses.
+- Display models in a clear and colorful table, sorted by ID.
+- Functional categorization of models (General Language, Embedding, Vision, OCR, etc.).
 - Visual progress indication during API call.
 
 ## Prerequisites
@@ -55,7 +56,7 @@ Once installation and configuration are complete, simply run the script:
 python list_models.py
 ```
 
-The script will display a table listing the available models, with their ID, owner, object type, creation date, and aliases.
+The script will display a table listing the available models, with their ID, owner, object type, **model type (functional category)**, creation date, and aliases.
 
 ## Directory Structure
 

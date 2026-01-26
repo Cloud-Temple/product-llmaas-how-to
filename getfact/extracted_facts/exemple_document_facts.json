@@ -1,0 +1,718 @@
+{
+  "facts": [
+    {
+      "id": "fact_1",
+      "type": "entity",
+      "content": "Jean Dupont",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Jean Dupont, architecte solutions chez Cloud Temple, dirige le projet LLMaaS depuis janvier 2025.",
+      "context": "Architecte solutions, responsable du projet LLMaaS",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_2",
+      "type": "entity",
+      "content": "Marie Martin",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "L'équipe comprend également Marie Martin, ingénieure DevOps spécialisée en infrastructure GPU.",
+      "context": "Ingénieure DevOps, spécialisée en infrastructure GPU",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_3",
+      "type": "entity",
+      "content": "Pierre Lefebvre",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Pierre Lefebvre, expert en sécurité SecNumCloud.",
+      "context": "Expert en sécurité SecNumCloud",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_4",
+      "type": "entity",
+      "content": "Sophie Durand",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Sophie Durand, directrice technique de Cloud Temple, basée dans les bureaux parisiens de l'entreprise.",
+      "context": "Directrice technique, basée à Paris",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_5",
+      "type": "entity",
+      "content": "Cloud Temple",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Cloud Temple, entreprise dont Jean Dupont est architecte solutions.",
+      "context": "Entreprise de cloud et IA, basée à Paris",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_6",
+      "type": "entity",
+      "content": "LLMaaS",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Projet LLMaaS, solution d'IA souveraine développée par Cloud Temple.",
+      "context": "Service d'IA souveraine, projet principal",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_7",
+      "type": "entity",
+      "content": "Reims",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Équipe d'infrastructure située dans le datacenter de Reims.",
+      "context": "Localisation du datacenter",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_8",
+      "type": "entity",
+      "content": "Lyon",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Nouveau datacenter de Lyon prévu pour octobre 2025.",
+      "context": "Prochain datacenter prévu",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_9",
+      "type": "entity",
+      "content": "NVIDIA L40S",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "4 serveurs avec GPU NVIDIA L40S (ia01 à ia04)",
+      "context": "GPU utilisé pour les serveurs IA",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_10",
+      "type": "entity",
+      "content": "NVIDIA A100",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "2 serveurs avec GPU NVIDIA A100 pour les modèles standards (ia05, ia06)",
+      "context": "GPU pour modèles standards",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_11",
+      "type": "entity",
+      "content": "NVIDIA Blackwell",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "10 serveurs avec GPU NVIDIA Blackwell (ia07 à ia17)",
+      "context": "GPU haut de gamme pour calcul intensif",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_12",
+      "type": "entity",
+      "content": "AMD Radeon Pro",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "2 serveurs avec GPU AMD Radeon Pro (ia18 et ia19)",
+      "context": "GPU AMD utilisé dans l'infrastructure",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_13",
+      "type": "entity",
+      "content": "Apple silicon",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "9 serveurs Apple silicones pour les modèles légers (ai-mac-01 à ai-mac-09)",
+      "context": "Serveurs Apple Silicon pour modèles légers",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_14",
+      "type": "entity",
+      "content": "Qwen 3 (14B)",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Qwen 3 (14B paramètres) : modèle principal pour usage général",
+      "context": "Modèle principal, 14 milliards de paramètres",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_15",
+      "type": "entity",
+      "content": "gpt-oss (120B)",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "gpt-oss (120B paramètres) : spécialisé en analyse complexe",
+      "context": "Modèle spécialisé, 120 milliards de paramètres",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_16",
+      "type": "entity",
+      "content": "Gemma 3 (27B)",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Gemma 3 (27B paramètres) : excellent pour le traitement multimodal",
+      "context": "Modèle multimodal, 27 milliards de paramètres",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_17",
+      "type": "entity",
+      "content": "lb01-prod",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Load balancer redondant (lb01-prod, lb02-prod) situés en DMZ",
+      "context": "Load balancer en DMZ",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_18",
+      "type": "entity",
+      "content": "lb02-prod",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Load balancer redondant (lb01-prod, lb02-prod) situés en DMZ",
+      "context": "Load balancer redondant",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_19",
+      "type": "entity",
+      "content": "OpnSense",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Firewall OpnSense assure la sécurité avec des règles strictes pour le trafic SecNumCloud.",
+      "context": "Firewall utilisé pour la sécurité",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_20",
+      "type": "event",
+      "content": "Lancement du projet LLMaaS",
+      "entities_involved": [
+        "Jean Dupont",
+        "Cloud Temple",
+        "LLMaaS"
+      ],
+      "confidence": 0.95,
+      "source_text": "Le 15 janvier 2025, Cloud Temple a officiellement lancé le projet LLMaaS.",
+      "context": "Début du projet",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_21",
+      "type": "event",
+      "content": "Premier déploiement des modèles Qwen",
+      "entities_involved": [
+        "Jean Dupont",
+        "Marie Martin",
+        "Pierre Lefebvre",
+        "Qwen 3",
+        "NVIDIA L40S"
+      ],
+      "confidence": 0.95,
+      "source_text": "Le 12 mars 2025, l'équipe a déployé avec succès les premiers modèles Qwen sur l'infrastructure L40S.",
+      "context": "Déploiement initial des modèles",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_22",
+      "type": "event",
+      "content": "Obtention de la certification SecNumCloud",
+      "entities_involved": [
+        "Cloud Temple",
+        "LLMaaS",
+        "Pierre Lefebvre",
+        "SecNumCloud"
+      ],
+      "confidence": 0.95,
+      "source_text": "Le 28 mai 2025, Cloud Temple a obtenu la certification SecNumCloud pour l'offre LLMaaS.",
+      "context": "Validation de conformité souveraine",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_23",
+      "type": "attribute",
+      "content": "Latence inférieure à 100ms pour le premier token",
+      "entities_involved": [
+        "Qwen 3",
+        "NVIDIA L40S"
+      ],
+      "confidence": 0.95,
+      "source_text": "Les tests de performance ont montré une latence inférieure à 100ms pour le premier token.",
+      "context": "Performance de latence",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_24",
+      "type": "attribute",
+      "content": "Throughput de 750 tokens/seconde",
+      "entities_involved": [
+        "NVIDIA L40S"
+      ],
+      "confidence": 0.95,
+      "source_text": "Throughput : 750 tokens/seconde sur GPU L40S",
+      "context": "Performance de traitement",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_25",
+      "type": "attribute",
+      "content": "Parallélisme de 6 requêtes simultanées par GPU",
+      "entities_involved": [
+        "NVIDIA L40S"
+      ],
+      "confidence": 0.95,
+      "source_text": "Parallélisme : 6 requêtes simultanées par GPU en moyenne",
+      "context": "Capacité de traitement parallèle",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_26",
+      "type": "attribute",
+      "content": "Disponibilité de 99.8% depuis le démarrage",
+      "entities_involved": [
+        "LLMaaS"
+      ],
+      "confidence": 0.95,
+      "source_text": "Disponibilité : 99.8% depuis le démarrage en production",
+      "context": "Fiabilité du service",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_27",
+      "type": "attribute",
+      "content": "Temps de réponse moyen de 85ms pour le premier token",
+      "entities_involved": [
+        "LLMaaS"
+      ],
+      "confidence": 0.95,
+      "source_text": "Temps de réponse moyen : 85ms pour le premier token",
+      "context": "Performance de réponse",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_28",
+      "type": "event",
+      "content": "Prévu ajout de nouveaux modèles spécialisés",
+      "entities_involved": [
+        "Jean Dupont",
+        "LLMaaS",
+        "Whisper",
+        "Génération d'images"
+      ],
+      "confidence": 0.9,
+      "source_text": "L'équipe prévoit l'ajout de nouveaux modèles spécialisés d'ici septembre 2025, notamment pour le traitement audio avec Whisper et la génération d'images.",
+      "context": "Évolution future du catalogue",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_29",
+      "type": "attribute",
+      "content": "Budget de 500k€ pour la phase 2",
+      "entities_involved": [
+        "LLMaaS",
+        "Phase 2"
+      ],
+      "confidence": 0.9,
+      "source_text": "Le budget alloué pour cette phase 2 est de 500k€.",
+      "context": "Investissement prévu",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_30",
+      "type": "event",
+      "content": "Prévu déploiement de 2 serveurs H100",
+      "entities_involved": [
+        "Sophie Durand",
+        "Cloud Temple",
+        "H100"
+      ],
+      "confidence": 0.9,
+      "source_text": "Sophie Durand a confirmé que Cloud Temple investira dans 2 serveurs supplémentaires équipés de GPU H100 pour répondre à la demande croissante.",
+      "context": "Mise à jour d'infrastructure",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_31",
+      "type": "temporal",
+      "content": "Janvier 2025",
+      "entities_involved": [
+        "Jean Dupont",
+        "LLMaaS"
+      ],
+      "confidence": 0.95,
+      "source_text": "Jean Dupont dirige le projet LLMaaS depuis janvier 2025.",
+      "context": "Début de la direction du projet",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_32",
+      "type": "temporal",
+      "content": "15 janvier 2025",
+      "entities_involved": [
+        "Cloud Temple",
+        "LLMaaS"
+      ],
+      "confidence": 0.95,
+      "source_text": "Le 15 janvier 2025, Cloud Temple a officiellement lancé le projet LLMaaS.",
+      "context": "Date de lancement du projet",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_33",
+      "type": "temporal",
+      "content": "12 mars 2025",
+      "entities_involved": [
+        "Équipe LLMaaS",
+        "Qwen 3"
+      ],
+      "confidence": 0.95,
+      "source_text": "Le 12 mars 2025, l'équipe a déployé avec succès les premiers modèles Qwen sur l'infrastructure L40S.",
+      "context": "Date du premier déploiement",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_34",
+      "type": "temporal",
+      "content": "28 mai 2025",
+      "entities_involved": [
+        "Cloud Temple",
+        "SecNumCloud"
+      ],
+      "confidence": 0.95,
+      "source_text": "Le 28 mai 2025, Cloud Temple a obtenu la certification SecNumCloud pour l'offre LLMaaS.",
+      "context": "Date d'obtention de la certification",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_35",
+      "type": "temporal",
+      "content": "1er juin 2025",
+      "entities_involved": [
+        "LLMaaS"
+      ],
+      "confidence": 0.95,
+      "source_text": "Les derniers tests réalisés le 1er juin 2025 montrent...",
+      "context": "Date des derniers tests",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_36",
+      "type": "temporal",
+      "content": "Septembre 2025",
+      "entities_involved": [
+        "LLMaaS"
+      ],
+      "confidence": 0.9,
+      "source_text": "L'équipe prévoit l'ajout de nouveaux modèles spécialisés d'ici septembre 2025...",
+      "context": "Échéance de la phase 2",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_37",
+      "type": "temporal",
+      "content": "Octobre 2025",
+      "entities_involved": [
+        "Cloud Temple",
+        "Lyon"
+      ],
+      "confidence": 0.9,
+      "source_text": "Le nouveau datacenter de Lyon prévu pour octobre 2025.",
+      "context": "Date de mise en service du datacenter",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_38",
+      "type": "spatial",
+      "content": "Paris",
+      "entities_involved": [
+        "Sophie Durand",
+        "Cloud Temple"
+      ],
+      "confidence": 0.95,
+      "source_text": "Sophie Durand, directrice technique de Cloud Temple, basée dans les bureaux parisiens de l'entreprise.",
+      "context": "Siège social ou bureau principal",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_39",
+      "type": "spatial",
+      "content": "Reims",
+      "entities_involved": [
+        "Équipe infrastructure",
+        "Datacenter"
+      ],
+      "confidence": 0.95,
+      "source_text": "Équipe d'infrastructure située dans le datacenter de Reims.",
+      "context": "Localisation du datacenter existant",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_40",
+      "type": "spatial",
+      "content": "Lyon",
+      "entities_involved": [
+        "Nouveau datacenter",
+        "Cloud Temple"
+      ],
+      "confidence": 0.9,
+      "source_text": "Le nouveau datacenter de Lyon prévu pour octobre 2025.",
+      "context": "Prochain site de déploiement",
+      "chunk_source": 1
+    },
+    {
+      "id": "fact_41",
+      "type": "event",
+      "content": "Extension du catalogue de modèles",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "Les prochaines étapes incluent l'extension du catalogue de modèles",
+      "context": "Prochaines étapes du développement",
+      "chunk_source": 2
+    },
+    {
+      "id": "fact_42",
+      "type": "event",
+      "content": "Optimisation des performances GPU",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "l'optimisation des performances GPU",
+      "context": "Prochaines étapes du développement",
+      "chunk_source": 2
+    },
+    {
+      "id": "fact_43",
+      "type": "event",
+      "content": "Développement d'outils d'administration avancés pour les clients entreprise",
+      "entities_involved": [],
+      "confidence": 0.95,
+      "source_text": "le développement d'outils d'administration avancés pour les clients entreprise",
+      "context": "Prochaines étapes du développement",
+      "chunk_source": 2
+    },
+    {
+      "id": "fact_44",
+      "type": "attribute",
+      "content": "Avancés",
+      "entities_involved": [
+        "outils d'administration"
+      ],
+      "confidence": 0.9,
+      "source_text": "outils d'administration avancés",
+      "context": "Caractéristique des outils pour clients entreprise",
+      "chunk_source": 2
+    },
+    {
+      "id": "fact_45",
+      "type": "spatial",
+      "content": "Pour les clients entreprise",
+      "entities_involved": [
+        "outils d'administration"
+      ],
+      "confidence": 0.9,
+      "source_text": "pour les clients entreprise",
+      "context": "Cible des outils développés",
+      "chunk_source": 2
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel_1",
+      "type": "leads",
+      "source_fact_id": "fact_1",
+      "target_fact_id": "fact_6",
+      "relationship_description": "Jean Dupont dirige le projet LLMaaS",
+      "confidence": 0.95,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_2",
+      "type": "supervises",
+      "source_fact_id": "fact_4",
+      "target_fact_id": "fact_1",
+      "relationship_description": "Sophie Durand supervise Jean Dupont",
+      "confidence": 0.95,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_3",
+      "type": "works_with",
+      "source_fact_id": "fact_1",
+      "target_fact_id": "fact_2",
+      "relationship_description": "Jean Dupont travaille avec Marie Martin",
+      "confidence": 0.9,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_4",
+      "type": "works_with",
+      "source_fact_id": "fact_1",
+      "target_fact_id": "fact_3",
+      "relationship_description": "Jean Dupont travaille avec Pierre Lefebvre",
+      "confidence": 0.9,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_5",
+      "type": "collaborates_with",
+      "source_fact_id": "fact_1",
+      "target_fact_id": "fact_7",
+      "relationship_description": "L'équipe LLMaaS collabore avec l'équipe d'infrastructure de Reims",
+      "confidence": 0.9,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_6",
+      "type": "uses",
+      "source_fact_id": "fact_9",
+      "target_fact_id": "fact_14",
+      "relationship_description": "NVIDIA L40S est utilisé pour exécuter Qwen 3",
+      "confidence": 0.95,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_7",
+      "type": "uses",
+      "source_fact_id": "fact_11",
+      "target_fact_id": "fact_15",
+      "relationship_description": "NVIDIA Blackwell est utilisé pour gpt-oss",
+      "confidence": 0.9,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_8",
+      "type": "uses",
+      "source_fact_id": "fact_13",
+      "target_fact_id": "fact_16",
+      "relationship_description": "Apple silicon est utilisé pour Gemma 3",
+      "confidence": 0.9,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_9",
+      "type": "deployed_on",
+      "source_fact_id": "fact_21",
+      "target_fact_id": "fact_9",
+      "relationship_description": "Les modèles Qwen ont été déployés sur les serveurs NVIDIA L40S",
+      "confidence": 0.95,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_10",
+      "type": "certified_by",
+      "source_fact_id": "fact_22",
+      "target_fact_id": "fact_19",
+      "relationship_description": "LLMaaS a obtenu la certification SecNumCloud via OpnSense",
+      "confidence": 0.95,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_11",
+      "type": "has_performance",
+      "source_fact_id": "fact_24",
+      "target_fact_id": "fact_23",
+      "relationship_description": "Le throughput de 750 tokens/seconde est associé à une latence <100ms",
+      "confidence": 0.9,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_12",
+      "type": "planned_for",
+      "source_fact_id": "fact_28",
+      "target_fact_id": "fact_36",
+      "relationship_description": "L'ajout de nouveaux modèles est prévu pour septembre 2025",
+      "confidence": 0.9,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_13",
+      "type": "planned_for",
+      "source_fact_id": "fact_30",
+      "target_fact_id": "fact_37",
+      "relationship_description": "Les serveurs H100 seront déployés en octobre 2025 à Lyon",
+      "confidence": 0.9,
+      "chunk_source": 1
+    },
+    {
+      "id": "rel_14",
+      "type": "planned_action",
+      "source_fact_id": "fact_41",
+      "target_fact_id": "fact_42",
+      "relationship_description": "Les étapes sont planifiées dans une séquence logique",
+      "confidence": 0.85,
+      "chunk_source": 2
+    },
+    {
+      "id": "rel_15",
+      "type": "planned_action",
+      "source_fact_id": "fact_42",
+      "target_fact_id": "fact_43",
+      "relationship_description": "Les étapes sont planifiées dans une séquence logique",
+      "confidence": 0.85,
+      "chunk_source": 2
+    },
+    {
+      "id": "rel_16",
+      "type": "target_audience",
+      "source_fact_id": "fact_43",
+      "target_fact_id": "fact_45",
+      "relationship_description": "Les outils d'administration avancés sont destinés aux clients entreprise",
+      "confidence": 0.9,
+      "chunk_source": 2
+    }
+  ],
+  "summary": {
+    "total_facts": 45,
+    "total_relationships": 16,
+    "fact_types_count": {
+      "entity": 19,
+      "event": 8,
+      "attribute": 7,
+      "temporal": 7,
+      "spatial": 4
+    },
+    "main_entities": [
+      "Datacenter",
+      "Nouveau datacenter",
+      "Cloud Temple",
+      "Jean Dupont",
+      "outils d'administration",
+      "Marie Martin",
+      "Qwen 3",
+      "Pierre Lefebvre",
+      "Équipe infrastructure",
+      "Lyon",
+      "Whisper",
+      "Génération d'images",
+      "H100",
+      "LLMaaS",
+      "SecNumCloud",
+      "Sophie Durand",
+      "Phase 2",
+      "NVIDIA L40S",
+      "Équipe LLMaaS"
+    ],
+    "key_themes": [
+      "Évolution future du projet",
+      "optimisation technique",
+      "Performance et scalabilité",
+      "développement futur",
+      "outils pour entreprise",
+      "IA souveraine",
+      "Déploiement d'infrastructure GPU",
+      "Certification SecNumCloud"
+    ],
+    "chunks_processed": 2
+  },
+  "metadata": {
+    "extraction_version": "1.0.1",
+    "timestamp": "2026-01-25T19:59:50.122942",
+    "source_file": "exemple_document.txt"
+  }
+}

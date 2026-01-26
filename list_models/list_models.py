@@ -9,8 +9,8 @@ pour récupérer la liste des modèles disponibles et les affiche
 dans un tableau formaté à l'aide de la bibliothèque Rich.
 
 Auteur: Cloud Temple
-Version: 1.0.1
-Date: 04/06/2025
+Version: 1.0.2
+Date: 25/01/2026
 """
 
 # Importations des modules nécessaires
@@ -130,6 +130,62 @@ def fetch_models(api_url, api_key):
                                      title="[bold red]Erreur Inattendue[/bold red]", border_style="red"))
         return None # Retourne None si une erreur s'est produite
 
+def categorize_model(model_id):
+    """
+    Catégorise un modèle selon son ID.
+    
+    Args:
+        model_id (str): L'ID du modèle
+        
+    Returns:
+        str: La catégorie du modèle
+    """
+    model_id_lower = model_id.lower()
+    
+    # Modèles de langage généralistes
+    if any(keyword in model_id_lower for keyword in ['gemma3', 'llama3', 'qwen3', 'mistral', 'ministral', 'gpt-oss', 'olmo', 'cogito', 'magistral']):
+        return "Langage Généraliste"
+    
+    # Modèles d'embedding
+    elif any(keyword in model_id_lower for keyword in ['embedding', 'bge']):
+        return "Embedding"
+    
+    # Modèles multimodaux (vision)
+    elif any(keyword in model_id_lower for keyword in ['vision', 'vl', 'image']):
+        return "Multimodal (Vision)"
+    
+    # Modèles spécialisés en traduction
+    elif 'translate' in model_id_lower:
+        return "Traduction"
+    
+    # Modèles OCR
+    elif 'ocr' in model_id_lower:
+        return "OCR"
+    
+    # Modèles spécialisés en code
+    elif 'coder' in model_id_lower:
+        return "Code"
+    
+    # Modèles de sécurité/modération
+    elif 'guardian' in model_id_lower:
+        return "Sécurité/Modération"
+    
+    # Modèles médicaux
+    elif 'medgemma' in model_id_lower or 'mediphi' in model_id_lower:
+        return "Médical"
+    
+    # Modèles de raisonnement
+    elif 'reasoning' in model_id_lower:
+        return "Raisonnement"
+    
+    # Modèles de fonctions
+    elif 'functiongemma' in model_id_lower:
+        return "Fonctions"
+    
+    # Par défaut
+    else:
+        return "Autre"
+
 def display_models_table(models_data):
     """
     Affiche la liste des modèles récupérés dans un tableau formaté avec Rich.
@@ -153,6 +209,7 @@ def display_models_table(models_data):
     table.add_column("ID du Modèle", style="dim cyan", width=35, overflow="fold") # ID du modèle, peut être long
     table.add_column("Possédé par", width=20) # Qui a créé/possède le modèle (ex: "openai", "cloud-temple")
     table.add_column("Type d'Objet", width=15) # Type d'objet API (généralement "model")
+    table.add_column("Type de Modèle", width=20) # Catégorie fonctionnelle du modèle
     table.add_column("Créé le (UTC)", justify="right", width=20) # Timestamp de création, formaté
     table.add_column("Alias", overflow="fold") # Liste des alias éventuels du modèle
 
@@ -178,11 +235,15 @@ def display_models_table(models_data):
         aliases = model.get("aliases", []) # Liste des alias, peut être vide
         aliases_str = ", ".join(aliases) if aliases else "-" # Formatte la liste des alias en chaîne de caractères
 
+        # Déterminer le type fonctionnel du modèle
+        model_type = categorize_model(model_id)
+        
         # Ajout d'une ligne à la table pour chaque modèle avec les informations extraites
         table.add_row(
             model_id,
             owned_by,
             object_type,
+            model_type,
             created_date_str,
             aliases_str
         )

@@ -105,9 +105,12 @@ def analyze_image_api(
     
     full_url = f"{api_url}v1/chat/completions"
     
+    # Format standard OpenAI pour les modèles multimodaux (compatible Qwen VL, Llama Vision, etc.)
     image_content: Dict[str, Any] = {
-        "type": "image",
-        "image": f"data:image/{image_format};base64,{image_base64}"
+        "type": "image_url",
+        "image_url": {
+            "url": f"data:image/{image_format};base64,{image_base64}"
+        }
     }
     
     messages = [
