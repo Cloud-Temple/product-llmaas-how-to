@@ -245,6 +245,7 @@ Series of minimalist examples designed to learn the base functions of the API:
 - **[Simple Vision](./simple_vision/)**: Basic image analysis with multimodal models.
 - **[Simple TTS](./simple_tts/)**: Fast speech synthesis and audio playback.
 - **[Simple Translate](./simple_translate/)**: Optimized text translation with TranslateGemma.
+- **[Simple MCP Demo](./simple_mcp_demo/)**: Using Model Context Protocol (MCP) in a secure distributed HTTP/SSE architecture.
 
 ## Configuration
 

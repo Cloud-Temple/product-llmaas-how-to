@@ -1,0 +1,19 @@
+services:
+  mcp-server:
+    build: .
+    container_name: mcp-server-demo
+    ports:
+      - "8000:8000"
+    environment:
+      # Clé d'authentification pour sécuriser le serveur
+      - MCP_SERVER_AUTH_KEY=ma_cle_docker_secrete
+    # On peut surcharger la commande pour activer le debug
+    command: ["--port", "8000", "--debug"]
+    restart: unless-stopped
+
+# Pour tester avec le client depuis votre machine hôte :
+# 1. Lancez : docker compose up -d
+# 2. Configurez votre .env local avec :
+#    MCP_SERVER_AUTH_KEY=ma_cle_docker_secrete
+#    MCP_SERVER_URL=http://localhost:8000
+# 3. Lancez le client : python3 mcp_client_demo.py --debug

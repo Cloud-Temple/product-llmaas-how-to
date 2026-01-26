@@ -25,6 +25,12 @@ Ce répertoire contient une collection d'exemples de code et de scripts démontr
 #### 🏥 **MedGemma - Analyse d'Images Médicales**
 - 🧬 **Spécialisation** : Validation et mise à jour bilingue de l'exemple d'analyse d'imagerie médicale (radio, scanner) via le modèle expert `medgemma:27b`.
 
+#### 🔌 **Simple MCP Demo - Protocole MCP Sécurisé**
+- 🌐 **Architecture Distribuée** : Implémentation de référence du Model Context Protocol (MCP) sur HTTP/SSE.
+- 🔒 **Sécurité Renforcée** : Authentification par clé API via middleware ASGI pur.
+- 🐳 **Docker Ready** : Déploiement simplifié du serveur MCP via Docker Compose.
+- 🐛 **Debug & Pédagogie** : Logs détaillés du protocole JSON-RPC et documentation du flux de session SSE.
+
 #### 📊 **Status API Demo - Dashboard & Énergie**
 - 📈 **Monitoring en Temps Réel** : Création d'un tableau de bord pour surveiller l'état de santé de la plateforme et les performances des modèles (TTFB, tok/s).
 - ⚡ **Energy Map Officielle** : Intégration des coefficients de consommation énergétique réels (kWh/Mtoken) mis à jour au 26/01/2026.
@@ -245,6 +251,7 @@ Série d'exemples minimalistes conçus pour apprendre à utiliser les fonctions 
 - **[Simple Vision](./simple_vision/)** : Analyse d'image basique avec des modèles multimodaux.
 - **[Simple TTS](./simple_tts/)** : Synthèse vocale rapide et lecture audio.
 - **[Simple Translate](./simple_translate/)** : Traduction de texte optimisée avec TranslateGemma.
+- **[Simple MCP Demo](./simple_mcp_demo/)** : Utilisation du Model Context Protocol (MCP) en architecture distribuée HTTP/SSE sécurisée.
 
 ## Configuration
 

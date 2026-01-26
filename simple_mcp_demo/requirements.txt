@@ -1,0 +1,16 @@
+# Dépendances pour l'exemple MCP HTTP/SSE Demo
+# ============================================
+
+# SDK MCP (Model Context Protocol)
+# Permet de créer et d'interagir avec des serveurs MCP
+mcp>=1.0.0
+
+# Serveur Web & API (requis pour FastMCP en mode HTTP/SSE)
+fastapi>=0.100.0
+uvicorn>=0.20.0
+
+# Client HTTP moderne avec support du streaming
+httpx>=0.27.0
+
+# Gestion des variables d'environnement
+python-dotenv>=1.0.0
