@@ -1,0 +1,12 @@
+# Dépendances pour la démo Voxtral (ASR Temps Réel via WebSocket)
+
+websockets>=12.0          # Client WebSocket async
+pydub>=0.25.1             # Chargement et conversion audio (nécessite ffmpeg)
+httpx>=0.27.0             # Client HTTP async pour la traduction en streaming
+python-dotenv>=1.0.0      # Gestion des fichiers .env
+rich>=13.0.0              # Affichage console amélioré
+
+# Note: ffmpeg doit être installé sur le système
+# - macOS:  brew install ffmpeg
+# - Linux:  sudo apt install ffmpeg
+# - Windows: https://ffmpeg.org/download.html

@@ -4,6 +4,14 @@ This repository contains a collection of code examples and scripts demonstrating
 
 ## 🆕 Changelog - Latest Updates
 
+### Version 3.1.0 - March 06, 2026
+
+#### 🎤 **Voxtral Live — Real-Time Transcription + Translation** ✨ *NEW EXAMPLE*
+- 🌐 **Real-Time WebSocket**: Word-by-word audio transcription via the WebSocket protocol `/v1/realtime` with the Voxtral model (`mistralai/Voxtral-Mini-4B-Realtime-2602`).
+- 🌍 **Live Translation**: Simultaneous translation to 26 languages (via TranslateGemma) in parallel with transcription, with side-by-side display.
+- 🔊 **Synchronized Audio Playback**: `--play` option to listen to audio alongside the transcription, synchronized to the first transcribed word.
+- 📊 **Rich Interface**: Side-by-side panels (Transcription | Translation) with real-time updates.
+
 ### Version 3.0.0 - January 26, 2026
 
 #### 💬 **Mini-Chat v3.0 - Major Architectural Overhaul**
@@ -181,6 +189,10 @@ Discover the capabilities of the Cloud Temple LLMaaS API through these screensho
 ![PhotoAnalyzer Vision 2](./screenshoot/journal2.png)
 *Second model vision on the newspaper image*
 
+### 🎤 Voxtral Live — Real-Time Transcription
+![Voxtral Live Demo](./screenshoot/voxtral.png)
+*Real-time transcription via WebSocket with live side-by-side translation*
+
 ### 📚 Simple RAG Demonstration
 ![Simple RAG Demo](./screenshoot/simple_rag.png)
 *Execution of the simple RAG script, showing the vectorization, search, and augmented generation steps*
@@ -229,8 +241,11 @@ Python script to test and compare LLM models via API with external configuration
 ### 🧪 [Test API Models PowerShell](./test_api_models_powershell/)
 PowerShell version of the model testing script, similar to the Python version but adapted for Windows environments.
 
+### 🎤 [Voxtral Live](./simple_voxtral/)
+**Real-time** audio transcription tool via WebSocket with the Voxtral model (`mistralai/Voxtral-Mini-4B-Realtime-2602`). Unlike Whisper (batch), Voxtral provides word-by-word streaming via the WebSocket protocol `/v1/realtime`. Includes live translation to 26 languages (via TranslateGemma) with side-by-side display and optional synchronized audio playback.
+
 ### 🎤 [Whisper](./whisper/)
-Example of using the Audio Speech Recognition (ASR) API with a Python client, demonstrating audio to text conversion.
+Example of using the batch Audio Speech Recognition (ASR) API with a Python client, demonstrating audio to text conversion via the REST endpoint `/v1/audio/transcriptions`.
 
 ### 🌐 [Translate](./translate/)
 Python script to translate text files by segments, using an LLM model and maintaining context between segments for consistent translations.

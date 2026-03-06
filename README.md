@@ -4,6 +4,14 @@ Ce répertoire contient une collection d'exemples de code et de scripts démontr
 
 ## 🆕 Changelog - Dernières Nouveautés
 
+### Version 3.1.0 - 06 Mars 2026
+
+#### 🎤 **Voxtral Live — Transcription + Traduction Temps Réel** ✨ *NOUVEL EXEMPLE*
+- 🌐 **WebSocket Temps Réel** : Transcription audio mot par mot via le protocole WebSocket `/v1/realtime` avec le modèle Voxtral (`mistralai/Voxtral-Mini-4B-Realtime-2602`).
+- 🌍 **Traduction Live** : Traduction simultanée vers 26 langues (via TranslateGemma) en parallèle de la transcription, avec affichage côte à côte.
+- 🔊 **Lecture Audio Synchronisée** : Option `--play` pour écouter l'audio en même temps que la transcription, synchronisée au premier mot transcrit.
+- 📊 **Interface Rich** : Panneaux côte à côte (Transcription | Traduction) avec mise à jour en temps réel.
+
 ### Version 3.0.0 - 26 Janvier 2026
 
 #### 💬 **Mini-Chat v3.0 - Refonte Architecturale Majeure**
@@ -187,6 +195,10 @@ Découvrez les capacités de l'API LLMaaS Cloud Temple à travers ces captures d
 ![PhotoAnalyzer Vision 2](./screenshoot/journal2.png)
 *Deuxième vision du modèle sur l'image du journal*
 
+### 🎤 Voxtral Live — Transcription Temps Réel
+![Voxtral Live Demo](./screenshoot/voxtral.png)
+*Transcription temps réel via WebSocket avec traduction live côte à côte*
+
 ### 📚 Démonstration RAG Simple
 ![Simple RAG Demo](./screenshoot/simple_rag.png)
 *Exécution du script RAG simple, montrant les étapes de vectorisation, recherche et génération augmentée*
@@ -235,8 +247,11 @@ Script Python pour tester et comparer des modèles LLM via API avec configuratio
 ### 🧪 [Test API Models PowerShell](./test_api_models_powershell/)
 Version PowerShell du script de test des modèles, similaire à la version Python mais adaptée aux environnements Windows.
 
+### 🎤 [Voxtral Live](./simple_voxtral/)
+Outil de transcription audio **temps réel** via WebSocket avec le modèle Voxtral (`mistralai/Voxtral-Mini-4B-Realtime-2602`). Contrairement à Whisper (batch), Voxtral fournit un streaming mot par mot via le protocole WebSocket `/v1/realtime`. Inclut la traduction live vers 26 langues (via TranslateGemma) avec affichage côte à côte et lecture audio synchronisée optionnelle.
+
 ### 🎤 [Whisper](./whisper/)
-Exemple d'utilisation de l'API de transcription audio (ASR) avec client Python, démontrant la conversion audio vers texte.
+Exemple d'utilisation de l'API de transcription audio (ASR) batch avec client Python, démontrant la conversion audio vers texte via l'endpoint REST `/v1/audio/transcriptions`.
 
 ### 🌐 [Translate](./translate/)
 Script Python pour traduire des fichiers texte par segments, utilisant un modèle LLM et conservant le contexte entre les segments pour des traductions cohérentes.
