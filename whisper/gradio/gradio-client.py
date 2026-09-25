@@ -29,7 +29,7 @@ import json, time
 class AudioProcessor:
     # curl --request POST --url 'http://80.75.153.201:8000/asr/' -F "file=@test.wav"
 
-    #  curl -X 'POST' 'https://api.ai.cloud-temple.com/v1/audio/transcriptions' -H 'Authorization: Bearer G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2a3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p8q9r0s1t2u3v4' -F 'file=@test_audio.wav;type=audio/x-wav' \
+    #  curl -X 'POST' 'https://api.ai.cloud-temple.com/v1/audio/transcriptions' -H "Authorization: Bearer ${LLMAAS_API_KEY}" -F 'file=@test_audio.wav;type=audio/x-wav' \
     # -H 'accept: application/json' \
     # -H 'Content-Type: multipart/form-data' \
     # -F 'language=fr' \
